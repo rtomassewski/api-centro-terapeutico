@@ -1,0 +1,92 @@
+// Este é o seu arquivo de schema do Prisma.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL") // Pega a URL do arquivo .env
+}
+
+// --- ENUMs (Tipos pré-definidos) ---
+
+// Define os papéis fixos do sistema
+enum NomePapel {
+  ADMINISTRADOR
+  MEDICO
+  PSICOLOGO
+  ENFERMEIRO
+  TERAPEUTA
+  COORDENADOR
+  TECNICO
+}
+
+// Define os status possíveis de um paciente
+enum StatusPaciente {
+  ATIVO
+  ALTA
+  EVADIDO
+}
+
+// --- MODELOS (Tabelas do Banco) ---
+
+model Papel {
+  id        Int         @id @default(autoincrement())
+  nome      NomePapel   @unique // Garante que só existe um papel "MEDICO"
+  descricao String?
+  usuarios  Usuario[] // Relação: Um Papel pode ter vários Usuários
+}
+
+model Usuario {
+  id                Int         @id @default(autoincrement())
+  nome_completo     String
+  email             String      @unique // E-mail de login, deve ser único
+  senha_hash        String
+  registro_conselho String?     // ex: CRM, CRP
+  ativo             Boolean     @default(true)
+
+  // Relação: Um Usuário pertence a UM Papel
+  papel             Papel       @relation(fields: [papelId], references: [id])
+  papelId           Int
+
+  // Relação: Um Usuário (profissional) pode escrever várias Evoluções
+  evolucoes         Evolucao[]
+
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+}
+
+model Paciente {
+  id                 Int            @id @default(autoincrement())
+  nome_completo      String
+  nome_social        String?
+  data_nascimento    DateTime
+  cpf                String         @unique // Deve ser único
+  nome_responsavel   String
+  telefone_responsavel String
+  data_admissao      DateTime       @default(now())
+  status             StatusPaciente @default(ATIVO)
+
+  // Relação: Um Paciente pode ter várias Evoluções
+  evolucoes          Evolucao[]
+
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+}
+
+model Evolucao {
+  id          Int      @id @default(autoincrement())
+  descricao   String   @db.Text // Permite textos longos
+  data_evolucao DateTime @default(now())
+
+  // Relação: A Evolução foi escrita por UM Usuário (profissional)
+  usuario     Usuario  @relation(fields: [usuarioId], references: [id])
+  usuarioId   Int
+
+  // Relação: A Evolução é sobre UM Paciente
+  paciente    Paciente @relation(fields: [pacienteId], references: [id])
+  pacienteId  Int
+
+  createdAt   DateTime @default(now())
+}
