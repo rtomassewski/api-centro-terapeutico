@@ -41,42 +41,44 @@ model Papel {
 model Usuario {
   id                Int         @id @default(autoincrement())
   nome_completo     String
-  email             String      @unique // E-mail de login, deve ser único
+  email             String      @unique
   senha_hash        String
-  registro_conselho String?     // ex: CRM, CRP
+  registro_conselho String?
   ativo             Boolean     @default(true)
-
-  // Relação: Um Usuário pertence a UM Papel
+  
   papel             Papel       @relation(fields: [papelId], references: [id])
   papelId           Int
 
-  // Relação: Um Usuário (profissional) pode escrever várias Evoluções
+  // --- NOVA LINHA (RELAÇÃO) ---
+  // O Usuário pertence a UMA Clínica
+  clinica           Clinica     @relation(fields: [clinicaId], references: [id])
+  clinicaId         Int
+  // --- FIM DA NOVA LINHA ---
+
   evolucoes         Evolucao[]
+  prescricoes       Prescricao[]
 
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
-
-  prescricoes   Prescricao[]
 }
 
 model Paciente {
   id                 Int            @id @default(autoincrement())
   nome_completo      String
-  nome_social        String?
-  data_nascimento    DateTime
-  cpf                String         @unique // Deve ser único
-  nome_responsavel   String
-  telefone_responsavel String
-  data_admissao      DateTime       @default(now())
+  // ... (outros campos do paciente)
   status             StatusPaciente @default(ATIVO)
 
-  // Relação: Um Paciente pode ter várias Evoluções
+  // --- NOVA LINHA (RELAÇÃO) ---
+  // O Paciente pertence a UMA Clínica
+  clinica            Clinica        @relation(fields: [clinicaId], references: [id])
+  clinicaId          Int
+  // --- FIM DA NOVA LINHA ---
+
   evolucoes          Evolucao[]
+  prescricoes        Prescricao[]
 
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
-
-  prescricoes   Prescricao[]
 }
 
 model Evolucao {
@@ -112,3 +114,50 @@ model Prescricao {
 
   createdAt       DateTime @default(now())
 }
+// --- NOVOS MODELOS SAAS ---
+
+// Enum para os tipos de plano que você vende
+enum TipoPlano {
+  BASICO
+  PRO
+  ENTERPRISE
+}
+
+// Enum para o status da licença
+enum StatusLicenca {
+  ATIVA
+  INADIMPLENTE
+  CANCELADA
+  TESTE
+}
+
+model Clinica {
+  id           Int      @id @default(autoincrement())
+  razao_social String
+  nome_fantasia String
+  cnpj         String   @unique // CNPJ do seu cliente
+  ativa        Boolean  @default(true)
+  
+  // Relações:
+  // Uma Clínica tem UMA Licença
+  licenca      Licenca?
+  // Uma Clínica tem VÁRIOS Usuários (profissionais)
+  usuarios     Usuario[]
+  // Uma Clínica tem VÁRIOS Pacientes
+  pacientes    Paciente[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Licenca {
+  id             Int           @id @default(autoincrement())
+  plano          TipoPlano     @default(BASICO)
+  status         StatusLicenca @default(TESTE)
+  data_expiracao DateTime
+
+  // Relação: A Licença pertence a UMA Clínica
+  clinica        Clinica       @relation(fields: [clinicaId], references: [id])
+  clinicaId      Int           @unique // Garante que 1 Clínica só tem 1 Licença
+}
+
