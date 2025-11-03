@@ -55,6 +55,8 @@ model Usuario {
 
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
+
+  prescricoes   Prescricao[]
 }
 
 model Paciente {
@@ -73,6 +75,8 @@ model Paciente {
 
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
+
+  prescricoes   Prescricao[]
 }
 
 model Evolucao {
@@ -89,4 +93,22 @@ model Evolucao {
   pacienteId  Int
 
   createdAt   DateTime @default(now())
+}
+model Prescricao {
+  id              Int      @id @default(autoincrement())
+  medicamento     String
+  dosagem         String // ex: "100mg" ou "5ml"
+  posologia       String   @db.Text // ex: "1 comprimido a cada 8 horas por 7 dias"
+  data_prescricao DateTime @default(now())
+  ativa           Boolean  @default(true) // Para suspender a prescrição
+
+  // Relação: A Prescrição é sobre UM Paciente
+  paciente        Paciente @relation(fields: [pacienteId], references: [id])
+  pacienteId      Int
+
+  // Relação: A Prescrição foi feita por UM Usuário (Médico)
+  usuario         Usuario  @relation(fields: [usuarioId], references: [id])
+  usuarioId       Int
+
+  createdAt       DateTime @default(now())
 }

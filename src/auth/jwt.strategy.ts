@@ -26,6 +26,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     // O 'sub' (subject) é o ID do usuário que definimos no login
     const usuario = await this.prisma.usuario.findUnique({
       where: { id: payload.sub },
+        include: {
+      papel: { // Inclui o objeto Papel
+        select: { nome: true }
+      }
+    }
     });
 
     if (!usuario || !usuario.ativo) {

@@ -33,4 +33,27 @@ export class EvolucoesService {
       }
     });
   }
+async findAllByPaciente(pacienteId: number) {
+    return this.prisma.evolucao.findMany({
+      // 1. Filtra as evoluções para este paciente
+      where: {
+        pacienteId: pacienteId,
+      },
+      // 2. IMPORTANTE: Ordena pela data, da mais recente para a mais antiga
+      orderBy: {
+        data_evolucao: 'desc',
+      },
+      // 3. Inclui os dados do profissional que escreveu
+      include: {
+        usuario: {
+          select: {
+            nome_completo: true,
+            papel: {
+              select: { nome: true },
+            },
+          },
+        },
+      },
+    });
+  }
 }
