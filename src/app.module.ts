@@ -7,9 +7,13 @@ import { AuthModule } from './auth/auth.module';
 import { EvolucoesModule } from './evolucoes/evolucoes.module';
 import { PrescricoesModule } from './prescricoes/prescricoes.module';
 import { ClinicasModule } from './clinicas/clinicas.module';
+import { ConfigModule } from '@nestjs/config';
+import { LicencasModule } from './licencas/licencas.module';
 
 @Module({
-  imports: [UsuariosModule, PacientesModule, AuthModule, EvolucoesModule, PrescricoesModule, ClinicasModule],
+  imports: [ConfigModule.forRoot({
+      isGlobal: true, 
+    }), UsuariosModule, PacientesModule, AuthModule, EvolucoesModule, PrescricoesModule, ClinicasModule, LicencasModule],
   controllers: [AppController],
   providers: [AppService],
 })
