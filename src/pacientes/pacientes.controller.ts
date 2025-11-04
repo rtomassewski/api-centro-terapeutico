@@ -29,52 +29,58 @@ export class PacientesController {
     return this.pacientesService.create(createPacienteDto, req.user);
   }
 
-@Post(':id/evolucoes') // Rota: POST /pacientes/1/evolucoes
-  @UseGuards(JwtAuthGuard) // 4. PROTEJA A ROTA!
+@Post(':id/evolucoes')
+  @UseGuards(JwtAuthGuard)
   async createEvolucao(
-    @Param('id', ParseIntPipe) pacienteId: number, // 5. Pega o ID do paciente da URL
-    @Body() dto: CreateEvolucaoDto, // 6. Pega o JSON do body
-    @Request() req, // 7. Pega a requisição (que contém o usuário logado)
+    @Param('id', ParseIntPipe) pacienteId: number,
+    @Body() dto: CreateEvolucaoDto,
+    @Request() req,
   ) {
-    // 8. O 'req.user' foi injetado pela JwtStrategy (Passo 8.1)
-    const usuarioLogadoId = req.user.id; 
-
+    // 'req.user' é o objeto 'usuarioLogado' completo
     return this.evolucoesService.create(
       dto,
       pacienteId,
-      usuarioLogadoId,
+      req.user, // 1. Passe o objeto 'req.user' inteiro
     );
   }
-@Get(':id/evolucoes') // Rota: GET /pacientes/1/evolucoes
-  @UseGuards(JwtAuthGuard) // 1. PROTEJA A ROTA!
+@Get(':id/evolucoes')
+  @UseGuards(JwtAuthGuard)
   async findEvolucoes(
-    @Param('id', ParseIntPipe) pacienteId: number, // 2. Pega o ID da URL
+    @Param('id', ParseIntPipe) pacienteId: number,
+    @Request() req, // 2. Adicione o @Request()
   ) {
-    // 3. Chama o serviço que acabamos de criar
-    return this.evolucoesService.findAllByPaciente(pacienteId);
+    return this.evolucoesService.findAllByPaciente(
+      pacienteId,
+      req.user, // 3. Passe o objeto 'req.user' inteiro
+    );
   }
 @Post(':id/prescricoes')
-  @Roles(NomePapel.MEDICO) // 3. APENAS MÉDICOS!
-  @UseGuards(JwtAuthGuard, RolesGuard) // 4. Use AMBOS os guardas
+  @Roles(NomePapel.MEDICO)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   async createPrescricao(
     @Param('id', ParseIntPipe) pacienteId: number,
     @Body() dto: CreatePrescricaoDto,
     @Request() req,
   ) {
-    const usuarioLogadoId = req.user.id;
-    return this.prescricoesService.create(
+    // NÃO defina 'usuarioLogadoId'
+    // Passe o 'req.user' inteiro
+    return this.prescricoesService.create( // <-- Esta é a sua linha 65
       dto,
       pacienteId,
-      usuarioLogadoId,
+      req.user, // <-- A chamada CORRETA
     );
   }
 
   @Get(':id/prescricoes')
-  @UseGuards(JwtAuthGuard) // 5. Todos logados podem ver
+  @UseGuards(JwtAuthGuard)
   async findPrescricoes(
     @Param('id', ParseIntPipe) pacienteId: number,
+    @Request() req, // 2. Adicione o @Request()
   ) {
-    return this.prescricoesService.findAllByPaciente(pacienteId);
+    return this.prescricoesService.findAllByPaciente(
+      pacienteId,
+      req.user, // 3. Passe o objeto 'req.user' inteiro
+    );
   }
 }
 

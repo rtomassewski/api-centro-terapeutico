@@ -1,25 +1,42 @@
 // src/prescricoes/prescricoes.service.ts
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { CreatePrescricaoDto } from './dto/create-prescricao.dto';
+import { Usuario } from '@prisma/client';
 
 @Injectable()
 export class PrescricoesService {
 
   constructor(private prisma: PrismaService) {}
+private async validarPaciente(pacienteId: number, clinicaId: number) {
+    const paciente = await this.prisma.paciente.findFirst({
+      where: {
+        id: pacienteId,
+        clinicaId: clinicaId,
+      },
+    });
+
+    if (!paciente) {
+      throw new NotFoundException('Paciente não encontrado ou não pertence a esta clínica.');
+    }
+    return paciente;
+  }
 
   async create(
     dto: CreatePrescricaoDto,
     pacienteId: number,
-    usuarioId: number,
+    usuarioLogado: Usuario, // <-- A assinatura CORRETA (3 argumentos)
   ) {
+    // Valide
+    await this.validarPaciente(pacienteId, usuarioLogado.clinicaId);
+    
     return this.prisma.prescricao.create({
       data: {
         medicamento: dto.medicamento,
         dosagem: dto.dosagem,
         posologia: dto.posologia,
         pacienteId: pacienteId,
-        usuarioId: usuarioId, // O ID do médico logado
+        usuarioId: usuarioLogado.id, // <-- Use o ID do objeto
       },
       include: {
         usuario: { select: { nome_completo: true } }
@@ -27,7 +44,9 @@ export class PrescricoesService {
     });
   }
 
-  async findAllByPaciente(pacienteId: number) {
+  async findAllByPaciente(pacienteId: number, usuarioLogado: Usuario) {
+    // 7. Valide
+    await this.validarPaciente(pacienteId, usuarioLogado.clinicaId);
     return this.prisma.prescricao.findMany({
       where: { pacienteId: pacienteId },
       orderBy: { data_prescricao: 'desc' },
