@@ -9,11 +9,12 @@ import { PrescricoesModule } from './prescricoes/prescricoes.module';
 import { ClinicasModule } from './clinicas/clinicas.module';
 import { ConfigModule } from '@nestjs/config';
 import { LicencasModule } from './licencas/licencas.module';
+import { PagamentosModule } from './pagamentos/pagamentos.module';
 
 @Module({
   imports: [ConfigModule.forRoot({
       isGlobal: true, 
-    }), UsuariosModule, PacientesModule, AuthModule, EvolucoesModule, PrescricoesModule, ClinicasModule, LicencasModule],
+    }), UsuariosModule, PacientesModule, AuthModule, EvolucoesModule, PrescricoesModule, ClinicasModule, LicencasModule, PagamentosModule],
   controllers: [AppController],
   providers: [AppService],
 })
