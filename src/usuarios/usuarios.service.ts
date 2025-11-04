@@ -24,6 +24,7 @@ export class UsuariosService {
         registro_conselho: dto.registro_conselho,
         papelId: dto.papelId,
         ativo: true,
+        clinicaId: dto.clinicaId,
       },
       // 3. Selecionar o que será retornado (NUNCA retorne a senha)
       select: {

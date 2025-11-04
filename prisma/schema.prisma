@@ -65,14 +65,22 @@ model Usuario {
 model Paciente {
   id                 Int            @id @default(autoincrement())
   nome_completo      String
-  // ... (outros campos do paciente)
+
+  // --- CAMPOS ANTIGOS QUE FALTAVAM ---
+  nome_social        String?
+  data_nascimento    DateTime
+  cpf                String         @unique
+  nome_responsavel   String
+  telefone_responsavel String
+  data_admissao      DateTime       @default(now())
+  // --- FIM DOS CAMPOS ANTIGOS ---
+
   status             StatusPaciente @default(ATIVO)
 
-  // --- NOVA LINHA (RELAÇÃO) ---
-  // O Paciente pertence a UMA Clínica
+  // --- NOVA RELAÇÃO (MULTI-TENANCY) ---
   clinica            Clinica        @relation(fields: [clinicaId], references: [id])
   clinicaId          Int
-  // --- FIM DA NOVA LINHA ---
+  // --- FIM DA NOVA RELAÇÃO ---
 
   evolucoes          Evolucao[]
   prescricoes        Prescricao[]
@@ -118,6 +126,7 @@ model Prescricao {
 
 // Enum para os tipos de plano que você vende
 enum TipoPlano {
+  TESTE  
   BASICO
   PRO
   ENTERPRISE

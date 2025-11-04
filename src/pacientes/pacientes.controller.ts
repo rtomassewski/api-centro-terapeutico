@@ -19,10 +19,16 @@ export class PacientesController {
               private readonly prescricoesService: PrescricoesService,)
  {}
 
-  @Post()
-  create(@Body() createPacienteDto: CreatePacienteDto) {
-    return this.pacientesService.create(createPacienteDto);
+@Post()
+  @UseGuards(JwtAuthGuard) // 4. Proteja a rota
+  create(
+    @Body() createPacienteDto: CreatePacienteDto,
+    @Request() req, // 5. Receba a requisição
+  ) {
+    // 6. Passe o 'req.user' (que contém o clinicaId) para o serviço
+    return this.pacientesService.create(createPacienteDto, req.user);
   }
+
 @Post(':id/evolucoes') // Rota: POST /pacientes/1/evolucoes
   @UseGuards(JwtAuthGuard) // 4. PROTEJA A ROTA!
   async createEvolucao(

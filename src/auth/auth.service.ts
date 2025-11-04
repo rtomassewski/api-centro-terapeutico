@@ -44,6 +44,7 @@ export class AuthService {
       sub: usuario.id, // 'sub' (subject) é o padrão do JWT para o ID
       email: usuario.email,
       papelId: usuario.papelId,
+      clinicaId: usuario.clinicaId,
     };
 
     return {
@@ -52,7 +53,8 @@ export class AuthService {
         id: usuario.id,
         nome: usuario.nome_completo,
         email: usuario.email,
-        papelId: usuario.papelId
+        papelId: usuario.papelId,
+        clinicaId: usuario.clinicaId,
       }
     };
   }

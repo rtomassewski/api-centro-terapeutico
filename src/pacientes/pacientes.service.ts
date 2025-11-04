@@ -9,7 +9,7 @@ export class PacientesService {
 
   constructor(private prisma: PrismaService) {}
 
-  async create(dto: CreatePacienteDto) {
+  async create(dto: CreatePacienteDto, usuarioLogado: any) {
     try {
       // Tenta criar o paciente
       const paciente = await this.prisma.paciente.create({
@@ -20,6 +20,7 @@ export class PacientesService {
           cpf: dto.cpf,
           nome_responsavel: dto.nome_responsavel,
           telefone_responsavel: dto.telefone_responsavel,
+          clinicaId: usuarioLogado.clinicaId,
           // Status e data_admissao são definidos por @default() no schema
         },
       });

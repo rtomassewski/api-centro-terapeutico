@@ -22,7 +22,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
    * ele validar a assinatura do token e verificar a expiração.
    * O 'payload' é o conteúdo que colocamos dentro do token no login.
    */
-  async validate(payload: { sub: number; email: string; papelId: number }) {
+  async validate(payload: { sub: number; email: string; papelId: number; clinicaId: number; }) {
     // O 'sub' (subject) é o ID do usuário que definimos no login
     const usuario = await this.prisma.usuario.findUnique({
       where: { id: payload.sub },
