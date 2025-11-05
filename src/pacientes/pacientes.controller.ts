@@ -28,6 +28,23 @@ export class PacientesController {
     // 6. Passe o 'req.user' (que contém o clinicaId) para o serviço
     return this.pacientesService.create(createPacienteDto, req.user);
   }
+  
+  @Get() // Rota: GET /pacientes
+  @UseGuards(JwtAuthGuard) // 2. Proteja a rota
+  findAll(
+    @Request() req, // 3. Pegue o usuário logado
+  ) {
+    return this.pacientesService.findAll(req.user);
+  }
+
+  @Get(':id') // Rota: GET /pacientes/1
+  @UseGuards(JwtAuthGuard) // 2. Proteja a rota
+  findOne(
+    @Param('id', ParseIntPipe) pacienteId: number, // 3. Pega o ID da URL
+    @Request() req, // 4. Pega o usuário logado
+  ) {
+    return this.pacientesService.findOne(pacienteId, req.user);
+  }
 
 @Post(':id/evolucoes')
   @UseGuards(JwtAuthGuard)
