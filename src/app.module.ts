@@ -11,11 +11,12 @@ import { ConfigModule } from '@nestjs/config';
 import { LicencasModule } from './licencas/licencas.module';
 import { PagamentosModule } from './pagamentos/pagamentos.module';
 import { CategoriasFinanceirasModule } from './categorias-financeiras/categorias-financeiras.module';
+import { TransacoesFinanceirasModule } from './transacoes-financeiras/transacoes-financeiras.module';
 
 @Module({
   imports: [ConfigModule.forRoot({
       isGlobal: true, 
-    }), UsuariosModule, PacientesModule, AuthModule, EvolucoesModule, PrescricoesModule, ClinicasModule, LicencasModule, PagamentosModule, CategoriasFinanceirasModule],
+    }), UsuariosModule, PacientesModule, AuthModule, EvolucoesModule, PrescricoesModule, ClinicasModule, LicencasModule, PagamentosModule, CategoriasFinanceirasModule, TransacoesFinanceirasModule],
   controllers: [AppController],
   providers: [AppService],
 })
