@@ -29,6 +29,12 @@ enum StatusPaciente {
   EVADIDO
 }
 
+// Enum para o tipo de categoria/transação
+enum TipoTransacao {
+  RECEITA // Dinheiro entrando
+  DESPESA // Dinheiro saindo
+}
+
 // --- MODELOS (Tabelas do Banco) ---
 
 model Papel {
@@ -84,6 +90,8 @@ model Paciente {
 
   evolucoes          Evolucao[]
   prescricoes        Prescricao[]
+
+  transacoes_financeiras TransacaoFinanceira[]
 
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
@@ -154,6 +162,8 @@ model Clinica {
   usuarios     Usuario[]
   // Uma Clínica tem VÁRIOS Pacientes
   pacientes    Paciente[]
+  categorias_financeiras CategoriaFinanceira[]
+  transacoes_financeiras TransacaoFinanceira[]
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -168,5 +178,42 @@ model Licenca {
   // Relação: A Licença pertence a UMA Clínica
   clinica        Clinica       @relation(fields: [clinicaId], references: [id])
   clinicaId      Int           @unique // Garante que 1 Clínica só tem 1 Licença
+}
+
+// --- MODELOS DO FINANCEIRO INTERNO (ERP) ---
+
+model CategoriaFinanceira {
+  id        Int           @id @default(autoincrement())
+  nome      String        // ex: "Mensalidade", "Aluguel", "Salários"
+  tipo      TipoTransacao // É uma categoria de RECEITA ou DESPESA
+
+  // Relação: A Categoria pertence a UMA Clínica
+  clinica   Clinica       @relation(fields: [clinicaId], references: [id])
+  clinicaId Int
+
+  // Relação: Uma Categoria pode estar em várias Transações
+  transacoes TransacaoFinanceira[]
+}
+
+model TransacaoFinanceira {
+  id              Int           @id @default(autoincrement())
+  descricao       String        // ex: "Mensalidade Março - Paciente José"
+  valor           Float         // O valor (Ex: 1500.00)
+  tipo            TipoTransacao // RECEITA ou DESPESA
+  data_vencimento DateTime      // Data que deve ser paga/recebida
+  data_pagamento  DateTime?     // Data que FOI paga (se nulo, está pendente)
+
+  // Relação: A Transação pertence a UMA Clínica
+  clinica         Clinica       @relation(fields: [clinicaId], references: [id])
+  clinicaId       Int
+
+  // Relação: A Transação pertence a UMA Categoria
+  categoria       CategoriaFinanceira @relation(fields: [categoriaId], references: [id])
+  categoriaId     Int
+
+  // Relação: A Transação PODE estar ligada a um Paciente
+  // (Útil para saber quem está devendo)
+  paciente        Paciente?     @relation(fields: [pacienteId], references: [id])
+  pacienteId      Int?
 }
 
