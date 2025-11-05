@@ -12,6 +12,7 @@ import { CreateEvolucaoDto } from '../evolucoes/dto/create-evolucao.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Request } from '@nestjs/common';
 
+
 @Controller('pacientes')
 export class PacientesController {
   constructor(private readonly pacientesService: PacientesService,
@@ -44,6 +45,20 @@ export class PacientesController {
     @Request() req, // 4. Pega o usuário logado
   ) {
     return this.pacientesService.findOne(pacienteId, req.user);
+  }
+
+  @Patch(':id') // Rota: PATCH /pacientes/1
+  @UseGuards(JwtAuthGuard) // 3. Proteja a rota
+  update(
+    @Param('id', ParseIntPipe) pacienteId: number,
+    @Body() updatePacienteDto: UpdatePacienteDto, // 4. Pega o DTO
+    @Request() req, // 5. Pega o usuário
+  ) {
+    return this.pacientesService.update(
+      pacienteId,
+      updatePacienteDto,
+      req.user,
+    );
   }
 
 @Post(':id/evolucoes')

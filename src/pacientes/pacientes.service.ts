@@ -4,6 +4,7 @@ import { CreatePacienteDto } from './dto/create-paciente.dto';
 import { PrismaService } from '../prisma.service';
 import { Prisma } from '@prisma/client'; // Importante para tratar erros
 import { Usuario } from '@prisma/client';
+import { UpdatePacienteDto } from './dto/update-paciente.dto';
 
 @Injectable()
 export class PacientesService {
@@ -82,5 +83,39 @@ export class PacientesService {
 
     // 3. Retorna o paciente com todos os dados
     return paciente;
+  }
+  async update(
+    pacienteId: number,
+    dto: UpdatePacienteDto,
+    usuarioLogado: Usuario,
+  ) {
+    // 1. Validar se o paciente pertence à clínica (reutilizando a lógica do findOne)
+    // Se não pertencer, o findOne() já lança o erro 404.
+    await this.findOne(pacienteId, usuarioLogado);
+
+    try {
+      // 2. Tentar atualizar o paciente
+      return await this.prisma.paciente.update({
+        where: {
+          id: pacienteId,
+          // (Não precisamos do filtro de clinicaId aqui, 
+          // pois o findOne() acima já fez essa checagem)
+        },
+        data: {
+          ...dto, // Passa todos os campos opcionais do DTO
+        },
+      });
+    } catch (error) {
+      // 3. Tratar erro de CPF duplicado (caso tentem mudar o CPF)
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        if ((error.meta?.target as string[]).includes('cpf')) {
+          throw new ConflictException('Este CPF já está em uso por outro paciente.');
+        }
+      }
+      throw error;
+    }
   }
 }
