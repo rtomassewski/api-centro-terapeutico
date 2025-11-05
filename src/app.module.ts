@@ -12,11 +12,12 @@ import { LicencasModule } from './licencas/licencas.module';
 import { PagamentosModule } from './pagamentos/pagamentos.module';
 import { CategoriasFinanceirasModule } from './categorias-financeiras/categorias-financeiras.module';
 import { TransacoesFinanceirasModule } from './transacoes-financeiras/transacoes-financeiras.module';
+import { AgendamentosModule } from './agendamentos/agendamentos.module';
 
 @Module({
   imports: [ConfigModule.forRoot({
       isGlobal: true, 
-    }), UsuariosModule, PacientesModule, AuthModule, EvolucoesModule, PrescricoesModule, ClinicasModule, LicencasModule, PagamentosModule, CategoriasFinanceirasModule, TransacoesFinanceirasModule],
+    }), UsuariosModule, PacientesModule, AuthModule, EvolucoesModule, PrescricoesModule, ClinicasModule, LicencasModule, PagamentosModule, CategoriasFinanceirasModule, TransacoesFinanceirasModule, AgendamentosModule],
   controllers: [AppController],
   providers: [AppService],
 })

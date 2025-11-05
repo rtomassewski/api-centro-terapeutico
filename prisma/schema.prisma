@@ -35,6 +35,30 @@ enum TipoTransacao {
   DESPESA // Dinheiro saindo
 }
 
+// Enum para os tipos de plano que você vende
+enum TipoPlano {
+  TESTE  
+  BASICO
+  PRO
+  ENTERPRISE
+}
+
+// Enum para o status da licença
+enum StatusLicenca {
+  ATIVA
+  INADIMPLENTE
+  CANCELADA
+  TESTE
+}
+
+// Enum para o status do agendamento
+enum StatusAgendamento {
+  AGENDADO
+  REALIZADO // Paciente compareceu
+  CANCELADO // Cancelado (pela clínica ou paciente)
+  FALTOU // Paciente não compareceu (no-show)
+}
+
 // --- MODELOS (Tabelas do Banco) ---
 
 model Papel {
@@ -64,6 +88,8 @@ model Usuario {
   evolucoes         Evolucao[]
   prescricoes       Prescricao[]
 
+  agendamentos Agendamento[]
+
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
 }
@@ -92,6 +118,8 @@ model Paciente {
   prescricoes        Prescricao[]
 
   transacoes_financeiras TransacaoFinanceira[]
+
+  agendamentos Agendamento[]
 
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
@@ -132,22 +160,6 @@ model Prescricao {
 }
 // --- NOVOS MODELOS SAAS ---
 
-// Enum para os tipos de plano que você vende
-enum TipoPlano {
-  TESTE  
-  BASICO
-  PRO
-  ENTERPRISE
-}
-
-// Enum para o status da licença
-enum StatusLicenca {
-  ATIVA
-  INADIMPLENTE
-  CANCELADA
-  TESTE
-}
-
 model Clinica {
   id           Int      @id @default(autoincrement())
   razao_social String
@@ -164,6 +176,8 @@ model Clinica {
   pacientes    Paciente[]
   categorias_financeiras CategoriaFinanceira[]
   transacoes_financeiras TransacaoFinanceira[]
+
+  agendamentos Agendamento[]
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -215,5 +229,30 @@ model TransacaoFinanceira {
   // (Útil para saber quem está devendo)
   paciente        Paciente?     @relation(fields: [pacienteId], references: [id])
   pacienteId      Int?
+}
+
+// --- MODELO DO MÓDULO DE AGENDAMENTOS ---
+
+model Agendamento {
+  id               Int               @id @default(autoincrement())
+  data_hora_inicio DateTime          // Ex: "2025-11-10T14:00:00Z"
+  data_hora_fim    DateTime          // Ex: "2025-11-10T15:00:00Z"
+  status           StatusAgendamento @default(AGENDADO)
+  notas            String?           @db.Text // Observações sobre a consulta
+
+  // Relação: O Agendamento pertence a UMA Clínica
+  clinica          Clinica           @relation(fields: [clinicaId], references: [id])
+  clinicaId        Int
+
+  // Relação: O Agendamento é de UM Paciente
+  paciente         Paciente          @relation(fields: [pacienteId], references: [id])
+  pacienteId       Int
+
+  // Relação: O Agendamento é com UM Profissional (Usuário)
+  usuario          Usuario           @relation(fields: [usuarioId], references: [id])
+  usuarioId        Int
+
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
 }
 
