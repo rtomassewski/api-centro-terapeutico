@@ -169,31 +169,41 @@ async findOne(id: number, usuarioLogado: Usuario) {
    * ATUALIZAR um agendamento (status, data, etc.)
    */
   async update(
-    id: number,
-    dto: UpdateAgendamentoDto,
-    usuarioLogado: Usuario,
-  ) {
-    // Segurança: Garante que o usuário está editando um agendamento da sua clínica
-    await this.getAgendamento(id, usuarioLogado.clinicaId);
+  id: number,
+  dto: UpdateAgendamentoDto,
+  usuarioLogado: Usuario,
+) {
+  // 1. Segurança (continua igual)
+  await this.getAgendamento(id, usuarioLogado.clinicaId);
 
-    // TODO: Se dto.data_hora_inicio ou dto.data_hora_fim mudaram,
-    // devemos rodar a checagem de conflito (checarConflito()) novamente.
-    // Por enquanto, focaremos na mudança de status.
+  // TODO: Adicionar checagem de conflito se a data (dto.data_hora_inicio) mudar.
 
-    return this.prisma.agendamento.update({
-      where: { id: id },
-      data: {
-        ...dto,
-        // Converte datas se elas forem enviadas
-        data_hora_inicio: dto.data_hora_inicio
-          ? new Date(dto.data_hora_inicio)
-          : undefined,
-        data_hora_fim: dto.data_hora_fim
-          ? new Date(dto.data_hora_fim)
-          : undefined,
-      },
-    });
-  }
+  // 2. Converte as datas (se elas foram enviadas no DTO)
+  const dataInicio = dto.data_hora_inicio
+    ? new Date(dto.data_hora_inicio)
+    : undefined;
+
+  const dataFim = dto.data_hora_fim
+    ? new Date(dto.data_hora_fim)
+    : undefined;
+
+  // 3. Atualiza no banco (A CORREÇÃO ESTÁ AQUI)
+  // Removemos o '...dto' e listamos os campos explicitamente.
+  return this.prisma.agendamento.update({
+    where: { id: id },
+    data: {
+      // Campos que o DTO pode atualizar
+      status: dto.status,
+      pacienteId: dto.pacienteId,
+      usuarioId: dto.usuarioId,
+      notas: dto.notas,
+
+      // Campos que precisam de conversão
+      data_hora_inicio: dataInicio,
+      data_hora_fim: dataFim,
+    },
+  });
+}
 
   /**
    * REMOVER um agendamento

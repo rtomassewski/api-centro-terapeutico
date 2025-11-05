@@ -18,6 +18,7 @@ import { QueryAgendamentoDto } from './dto/query-agendamento.dto';
 import { UpdateAgendamentoDto } from './dto/update-agendamento.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('agendamentos')
 export class AgendamentosController {
   constructor(private readonly agendamentosService: AgendamentosService) {}
