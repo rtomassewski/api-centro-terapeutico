@@ -18,7 +18,7 @@ export class PacientesService {
         data: {
           nome_completo: dto.nome_completo,
           nome_social: dto.nome_social,
-          data_nascimento: dto.data_nascimento, // Prisma converte a string ISO
+          data_nascimento: new Date(dto.data_nascimento), // Prisma converte a string ISO
           cpf: dto.cpf,
           nome_responsavel: dto.nome_responsavel,
           telefone_responsavel: dto.telefone_responsavel,
