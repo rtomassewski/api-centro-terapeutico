@@ -14,11 +14,12 @@ import { CategoriasFinanceirasModule } from './categorias-financeiras/categorias
 import { TransacoesFinanceirasModule } from './transacoes-financeiras/transacoes-financeiras.module';
 import { AgendamentosModule } from './agendamentos/agendamentos.module';
 import { AdministracaoMedicamentosModule } from './administracao-medicamentos/administracao-medicamentos.module';
+import { SinaisVitaisModule } from './sinais-vitais/sinais-vitais.module';
 
 @Module({
   imports: [ConfigModule.forRoot({
       isGlobal: true, 
-    }), UsuariosModule, PacientesModule, AuthModule, EvolucoesModule, PrescricoesModule, ClinicasModule, LicencasModule, PagamentosModule, CategoriasFinanceirasModule, TransacoesFinanceirasModule, AgendamentosModule, AdministracaoMedicamentosModule],
+    }), UsuariosModule, PacientesModule, AuthModule, EvolucoesModule, PrescricoesModule, ClinicasModule, LicencasModule, PagamentosModule, CategoriasFinanceirasModule, TransacoesFinanceirasModule, AgendamentosModule, AdministracaoMedicamentosModule, SinaisVitaisModule],
   controllers: [AppController],
   providers: [AppService],
 })

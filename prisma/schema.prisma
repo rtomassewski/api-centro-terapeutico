@@ -96,6 +96,7 @@ model Usuario {
   evolucoes         Evolucao[]
   prescricoes       Prescricao[]
   agendamentos      Agendamento[]
+  sinais_vitais_aferidos SinalVital[]
 
   // --- LINHA CORRIGIDA ---
   // O @relation foi movido para o final da linha.
@@ -130,6 +131,7 @@ model Paciente {
 
   transacoes_financeiras TransacaoFinanceira[]
   administracoes_medicamentos AdministracaoMedicamento[]
+  sinais_vitais SinalVital[]
 
   agendamentos Agendamento[]
 
@@ -193,6 +195,7 @@ model Clinica {
   administracoes_medicamentos AdministracaoMedicamento[]
 
   agendamentos Agendamento[]
+  sinais_vitais SinalVital[]
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -296,5 +299,32 @@ model AdministracaoMedicamento {
   // não na hora do agendamento (aprazamento).
   usuario_administrou      Usuario?            @relation("UsuarioAdministrou", fields: [usuarioAdministrouId], references: [id])
   usuarioAdministrouId     Int?
+}
+// --- MODELO DO MÓDULO DE SINAIS VITAIS ---
+
+model SinalVital {
+  id                        Int       @id @default(autoincrement())
+  data_hora_afericao        DateTime  @default(now()) // Data e hora da medição
+
+  pressao_arterial          String?   // Ex: "120/80"
+  frequencia_cardiaca       Int?      // BPM (Batimentos por Minuto)
+  frequencia_respiratoria   Int?      // RPM (Respirações por Minuto)
+  temperatura               Float?    // Ex: 36.5 (Celsius)
+  saturacao_oxigenio        Int?      // SpO2 (%)
+  glicemia                  Int?      // mg/dL
+  dor                       Int?      // Escala de 0 a 10
+  notas                     String?   @db.Text
+
+  // Relações de Segurança e Auditoria
+  clinica                   Clinica   @relation(fields: [clinicaId], references: [id])
+  clinicaId                 Int
+
+  paciente                  Paciente  @relation(fields: [pacienteId], references: [id])
+  pacienteId                Int
+
+  usuario_aferiu            Usuario   @relation(fields: [usuarioAferiuId], references: [id])
+  usuarioAferiuId           Int       // Quem mediu (Técnico/Enfermeiro)
+
+  createdAt                 DateTime  @default(now())
 }
 

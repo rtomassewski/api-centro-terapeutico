@@ -10,11 +10,13 @@ import {
   UseGuards,
   ParseIntPipe,
   Request,
+  Query
 } from '@nestjs/common';
 import { AdministracaoMedicamentosService } from './administracao-medicamentos.service';
 import { CreateAdministracaoMedicamentoDto } from './dto/create-administracao-medicamento.dto';
 import { UpdateAdministracaoMedicamentoDto } from './dto/update-administracao-medicamento.dto';
 import { AdministrarMedicamentoDto } from './dto/administrar-medicamento.dto';
+import { QueryAdministracaoMedicamentoDto } from './dto/query-administracao-medicamento.dto';
 
 // --- Imports de Segurança ---
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -48,14 +50,34 @@ export class AdministracaoMedicamentosController {
     return this.service.administrar(id, dto, req.user);
   }
 
-  // (Deixe os outros métodos gerados pelo CLI comentados por enquanto)
-  /*
   @Get()
-  findAll() { ... }
+  @Roles(
+    NomePapel.ADMINISTRADOR,
+    NomePapel.ENFERMEIRO,
+    NomePapel.TECNICO,
+    NomePapel.MEDICO,
+  )
+  findAll(
+    @Request() req,
+    @Query() query: QueryAdministracaoMedicamentoDto, // 4. Pega os filtros
+  ) {
+    return this.service.findAll(query, req.user);
+  }
 
   @Get(':id')
-  findOne(...) { ... }
-
+  @Roles(
+    NomePapel.ADMINISTRADOR,
+    NomePapel.ENFERMEIRO,
+    NomePapel.TECNICO,
+    NomePapel.MEDICO,
+  )
+  findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @Request() req,
+  ) {
+    return this.service.findOne(id, req.user);
+  }
+/*
   @Patch(':id')
   update(...) { ... }
 

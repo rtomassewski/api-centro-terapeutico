@@ -3,8 +3,9 @@ import { Injectable, NotFoundException, ConflictException, ForbiddenException } 
 import { CreateAdministracaoMedicamentoDto } from './dto/create-administracao-medicamento.dto';
 import { UpdateAdministracaoMedicamentoDto } from './dto/update-administracao-medicamento.dto';
 import { PrismaService } from '../prisma.service';
-import { StatusAdministracao, Usuario } from '@prisma/client';
+import { StatusAdministracao, Usuario, Prisma } from '@prisma/client';
 import { AdministrarMedicamentoDto } from './dto/administrar-medicamento.dto';
+import { QueryAdministracaoMedicamentoDto } from './dto/query-administracao-medicamento.dto';
 
 
 @Injectable()
@@ -108,20 +109,66 @@ export class AdministracaoMedicamentosService {
     });
   }
 
-  // (Vamos implementar os outros métodos do CRUD depois)
-  findAll() {
-    return `This action returns all administracaoMedicamentos`;
+  async findAll(
+    query: QueryAdministracaoMedicamentoDto,
+    usuarioLogado: Usuario,
+  ) {
+    // 1. Filtro base de segurança
+    const where: Prisma.AdministracaoMedicamentoWhereInput = {
+      clinicaId: usuarioLogado.clinicaId,
+    };
+
+    // 2. Adiciona filtros dinâmicos
+    if (query.status) {
+      where.status = query.status;
+    }
+    if (query.pacienteId) {
+      where.pacienteId = query.pacienteId;
+    }
+    if (query.usuarioAdministrouId) {
+      where.usuarioAdministrouId = query.usuarioAdministrouId;
+    }
+
+    // 3. Filtro de período (na data PREVISTA)
+    if (query.data_inicio && query.data_fim) {
+      where.data_hora_prevista = {
+        gte: new Date(query.data_inicio), // gte: Maior ou igual (>=)
+        lte: new Date(query.data_fim),   // lte: Menor ou igual (<=)
+      };
+    }
+
+    // 4. Busca no banco
+    return this.prisma.administracaoMedicamento.findMany({
+      where: where,
+      include: {
+        paciente: { select: { nome_completo: true } },
+        prescricao: { select: { medicamento: true, dosagem: true } },
+        usuario_administrou: { select: { nome_completo: true } },
+      },
+      orderBy: {
+        data_hora_prevista: 'desc', // Mais recentes primeiro
+      },
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} administracaoMedicamento`;
-  }
-
-  update(id: number, updateDto: UpdateAdministracaoMedicamentoDto) {
-    return `This action updates a #${id} administracaoMedicamento`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} administracaoMedicamento`;
+  /**
+   * (NOVO) BUSCAR UMA administração
+   */
+  async findOne(id: number, usuarioLogado: Usuario) {
+    // Segurança: Helper já valida a clínica
+    const administracao = await this.getAdministracao(
+      id,
+      usuarioLogado.clinicaId,
+    );
+    
+    // (O getAdministracao só retorna o ID, vamos buscar completo)
+    return this.prisma.administracaoMedicamento.findUnique({
+      where: { id: administracao.id },
+      include: {
+        paciente: { select: { nome_completo: true } },
+        prescricao: { select: { medicamento: true, dosagem: true, posologia: true } },
+        usuario_administrou: { select: { nome_completo: true } },
+      },
+    });
   }
 }
