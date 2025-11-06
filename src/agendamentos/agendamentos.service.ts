@@ -90,8 +90,8 @@ export class AgendamentosService {
 
     return this.prisma.agendamento.create({
       data: {
-        data_hora_inicio: dto.data_hora_inicio,
-        data_hora_fim: dto.data_hora_fim,
+        data_hora_inicio: new Date(dto.data_hora_inicio), // <-- Corrigido
+        data_hora_fim: new Date(dto.data_hora_fim),       // <-- Corrigido
         notas: dto.notas,
         clinicaId: clinicaId,
         pacienteId: dto.pacienteId,

@@ -152,6 +152,14 @@ export class UsuariosService {
       where: {
         email: email,
       },
+      include: {
+        papel: true, // Inclui o papel
+        clinica: { // Inclui a clínica do usuário
+          include: {
+            licenca: true, // E inclui a licença da clínica
+          },
+        },
+      },
     });
   }
 }

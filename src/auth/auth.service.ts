@@ -3,6 +3,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { UsuariosService } from '../usuarios/usuarios.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { StatusLicenca, TipoPlano } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -38,13 +39,18 @@ export class AuthService {
    * Gera o Token JWT para o usuário validado
    */
   async login(usuario: any) {
-    // O "payload" é o que vamos guardar dentro do token
-    // Guardamos o ID e o Papel para saber quem ele é e o que pode fazer
+    if (!usuario.clinica?.licenca) {
+      throw new UnauthorizedException('Clínica ou licença não encontrada.');
+    }
+
+    const licenca = usuario.clinica.licenca;
     const payload = { 
       sub: usuario.id, // 'sub' (subject) é o padrão do JWT para o ID
       email: usuario.email,
       papelId: usuario.papelId,
       clinicaId: usuario.clinicaId,
+      licencaStatus: licenca.status as StatusLicenca,
+      licencaPlano: licenca.plano as TipoPlano,
     };
 
     return {
@@ -55,6 +61,7 @@ export class AuthService {
         email: usuario.email,
         papelId: usuario.papelId,
         clinicaId: usuario.clinicaId,
+        licenca: licenca,
       }
     };
   }
