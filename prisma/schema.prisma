@@ -11,6 +11,14 @@ datasource db {
 
 // --- ENUMs (Tipos pré-definidos) ---
 
+// Enum para as unidades de medida do estoque
+enum UnidadeMedida {
+  UNIDADE   // Unidade (ex: comprimido, seringa)
+  CAIXA
+  FRASCO
+  ML
+}
+
 // Enum para o status da administração do medicamento
 enum StatusAdministracao {
   PENDENTE     // Agendado pela enfermeira, ainda não administrado
@@ -97,6 +105,8 @@ model Usuario {
   prescricoes       Prescricao[]
   agendamentos      Agendamento[]
   sinais_vitais_aferidos SinalVital[]
+  entradas_estoque_registradas EntradaEstoque[]
+  saidas_estoque_registradas   SaidaEstoque[]
 
   // --- LINHA CORRIGIDA ---
   // O @relation foi movido para o final da linha.
@@ -196,6 +206,9 @@ model Clinica {
 
   agendamentos Agendamento[]
   sinais_vitais SinalVital[]
+  produtos          Produto[]
+  entradas_estoque  EntradaEstoque[]
+  saidas_estoque    SaidaEstoque[]
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -299,6 +312,8 @@ model AdministracaoMedicamento {
   // não na hora do agendamento (aprazamento).
   usuario_administrou      Usuario?            @relation("UsuarioAdministrou", fields: [usuarioAdministrouId], references: [id])
   usuarioAdministrouId     Int?
+
+  saida_estoque   SaidaEstoque?
 }
 // --- MODELO DO MÓDULO DE SINAIS VITAIS ---
 
@@ -326,5 +341,70 @@ model SinalVital {
   usuarioAferiuId           Int       // Quem mediu (Técnico/Enfermeiro)
 
   createdAt                 DateTime  @default(now())
+}
+
+// --- MODELOS DO MÓDULO DE ESTOQUE (FARMÁCIA) ---
+
+model Produto {
+  id                 Int      @id @default(autoincrement())
+  nome               String   // Ex: "Sertralina 50mg (Caixa 30cp)"
+  descricao          String?
+  unidade_medida     UnidadeMedida @default(UNIDADE)
+
+  // O estoque "virtual" atual.
+  // Será atualizado por transações (Entradas/Saídas)
+  quantidade_estoque Int      @default(0)
+
+  // Alerta de estoque baixo
+  estoque_minimo     Int      @default(0) 
+
+  // Relações
+  clinica            Clinica   @relation(fields: [clinicaId], references: [id])
+  clinicaId          Int
+
+  entradas           EntradaEstoque[]
+  saidas             SaidaEstoque[]
+}
+
+// Registro de quando o estoque ENTRA (Compras)
+model EntradaEstoque {
+  id            Int       @id @default(autoincrement())
+  quantidade    Int       // Quantos entraram
+  data_entrada  DateTime  @default(now())
+  lote          String?   // Número do Lote (Crítico para farmácia)
+  data_validade DateTime? // Data de Validade
+
+  // Relações
+  produto         Produto   @relation(fields: [produtoId], references: [id])
+  produtoId       Int
+
+  usuario_registrou Usuario   @relation(fields: [usuarioId], references: [id])
+  usuarioId         Int       // Quem registrou a entrada
+
+  clinica         Clinica   @relation(fields: [clinicaId], references: [id])
+  clinicaId       Int
+}
+
+// Registro de quando o estoque SAI (Uso pela enfermagem)
+model SaidaEstoque {
+  id          Int       @id @default(autoincrement())
+  quantidade  Int       // Quantos saíram
+  data_saida  DateTime  @default(now())
+  motivo      String?   // Ex: "Administração", "Perda", "Ajuste"
+
+  // Relações
+  produto         Produto   @relation(fields: [produtoId], references: [id])
+  produtoId       Int
+
+  usuario_registrou Usuario   @relation(fields: [usuarioId], references: [id])
+  usuarioId         Int       // Quem registrou a saída (o técnico)
+
+  clinica         Clinica   @relation(fields: [clinicaId], references: [id])
+  clinicaId       Int
+
+  // Ligação com a Enfermagem (A CAUSA da saída)
+  // Esta saída foi causada por qual administração de medicamento?
+  administracao   AdministracaoMedicamento? @relation(fields: [administracaoId], references: [id])
+  administracaoId Int? @unique // 1-para-1: Uma administração só pode ter uma saída
 }
 
