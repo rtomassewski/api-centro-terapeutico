@@ -11,6 +11,14 @@ datasource db {
 
 // --- ENUMs (Tipos pré-definidos) ---
 
+// Enum para o status da administração do medicamento
+enum StatusAdministracao {
+  PENDENTE     // Agendado pela enfermeira, ainda não administrado
+  ADMINISTRADO // O técnico/enfermeiro deu o remédio
+  RECUSADO     // O paciente recusou
+  NAO_ADMINISTRADO // Ex: Paciente dormindo, medicação em falta, etc.
+}
+
 // Define os papéis fixos do sistema
 enum NomePapel {
   ADMINISTRADOR
@@ -87,8 +95,11 @@ model Usuario {
 
   evolucoes         Evolucao[]
   prescricoes       Prescricao[]
+  agendamentos      Agendamento[]
 
-  agendamentos Agendamento[]
+  // --- LINHA CORRIGIDA ---
+  // O @relation foi movido para o final da linha.
+  administracoes_feitas AdministracaoMedicamento[] @relation("UsuarioAdministrou")
 
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
@@ -118,6 +129,7 @@ model Paciente {
   prescricoes        Prescricao[]
 
   transacoes_financeiras TransacaoFinanceira[]
+  administracoes_medicamentos AdministracaoMedicamento[]
 
   agendamentos Agendamento[]
 
@@ -156,6 +168,8 @@ model Prescricao {
   usuario         Usuario  @relation(fields: [usuarioId], references: [id])
   usuarioId       Int
 
+  administracoes AdministracaoMedicamento[]
+
   createdAt       DateTime @default(now())
 }
 // --- NOVOS MODELOS SAAS ---
@@ -176,6 +190,7 @@ model Clinica {
   pacientes    Paciente[]
   categorias_financeiras CategoriaFinanceira[]
   transacoes_financeiras TransacaoFinanceira[]
+  administracoes_medicamentos AdministracaoMedicamento[]
 
   agendamentos Agendamento[]
 
@@ -254,5 +269,32 @@ model Agendamento {
 
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
+}
+// --- MODELO DO MÓDULO DE APRAZAMENTO (ENFERMAGEM) ---
+
+model AdministracaoMedicamento {
+  id                       Int                 @id @default(autoincrement())
+  data_hora_prevista       DateTime            // O horário que a enfermeira agendou
+  data_hora_administracao  DateTime?           // O horário exato que o técnico administrou
+  status                   StatusAdministracao @default(PENDENTE)
+  notas                    String?             @db.Text // Ex: "Paciente recusou", "Administrado com suco"
+
+  // Relação: A que clínica pertence
+  clinica                  Clinica             @relation(fields: [clinicaId], references: [id])
+  clinicaId                Int
+
+  // Relação: A que paciente se refere
+  paciente                 Paciente            @relation(fields: [pacienteId], references: [id])
+  pacienteId               Int
+
+  // Relação: Baseado em qual prescrição médica
+  prescricao               Prescricao          @relation(fields: [prescricaoId], references: [id])
+  prescricaoId             Int
+
+  // Relação: Qual usuário (enfermeiro/técnico) ADMINISTROU
+  // É opcional (?) porque só é preenchido na hora da administração,
+  // não na hora do agendamento (aprazamento).
+  usuario_administrou      Usuario?            @relation("UsuarioAdministrou", fields: [usuarioAdministrouId], references: [id])
+  usuarioAdministrouId     Int?
 }
 
