@@ -30,13 +30,20 @@ export class TransacoesFinanceirasService {
    * CRIAR um novo lançamento (Receita ou Despesa)
    */
   async create(dto: CreateTransacaoFinanceiraDto, usuarioLogado: Usuario) {
-    // TODO: Validar se a categoriaId e o pacienteId (se houver)
+    const clinicaId = usuarioLogado.clinicaId;
+
+    // TODO: Validar se a categoriaId e o pacienteId
     // também pertencem à clinicaId do usuário.
-    // Por enquanto, confiamos que o front-end enviará os IDs corretos.
 
     return this.prisma.transacaoFinanceira.create({
       data: {
-        ...dto,
+        // --- CORREÇÃO AQUI ---
+        descricao: dto.descricao,
+        valor: dto.valor,
+        tipo: dto.tipo,
+        data_vencimento: new Date(dto.data_vencimento), // Converte a String
+        categoriaId: dto.categoriaId,
+        pacienteId: dto.pacienteId,
         clinicaId: usuarioLogado.clinicaId, // Segurança: Vincula à clínica
       },
     });
