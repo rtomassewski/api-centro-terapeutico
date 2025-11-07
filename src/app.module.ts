@@ -20,11 +20,12 @@ import { EntradasEstoqueModule } from './entradas-estoque/entradas-estoque.modul
 import { SaidasEstoqueModule } from './saidas-estoque/saidas-estoque.module';
 import { AlasModule } from './alas/alas.module';
 import { QuartosModule } from './quartos/quartos.module';
+import { LeitosModule } from './leitos/leitos.module';
 
 @Module({
   imports: [ConfigModule.forRoot({
       isGlobal: true, 
-    }), UsuariosModule, PacientesModule, AuthModule, EvolucoesModule, PrescricoesModule, ClinicasModule, LicencasModule, PagamentosModule, CategoriasFinanceirasModule, TransacoesFinanceirasModule, AgendamentosModule, AdministracaoMedicamentosModule, SinaisVitaisModule, ProdutosModule, EntradasEstoqueModule, SaidasEstoqueModule, AlasModule, QuartosModule],
+    }), UsuariosModule, PacientesModule, AuthModule, EvolucoesModule, PrescricoesModule, ClinicasModule, LicencasModule, PagamentosModule, CategoriasFinanceirasModule, TransacoesFinanceirasModule, AgendamentosModule, AdministracaoMedicamentosModule, SinaisVitaisModule, ProdutosModule, EntradasEstoqueModule, SaidasEstoqueModule, AlasModule, QuartosModule, LeitosModule],
   controllers: [AppController],
   providers: [AppService],
 })
