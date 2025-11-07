@@ -217,6 +217,7 @@ export class AdministracaoMedicamentosService {
   prescricao: { // <-- CORREÇÃO
     select: {
       dosagem: true,
+      quantidade_por_dose: true,
       produto: { // Seleciona o produto relacionado
         select: { nome: true }, // E o nome desse produto
       },
