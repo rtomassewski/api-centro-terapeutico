@@ -2,9 +2,10 @@
 import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
 import { CreatePacienteDto } from './dto/create-paciente.dto';
 import { PrismaService } from '../prisma.service';
-import { Prisma } from '@prisma/client'; // Importante para tratar erros
+import { Prisma, StatusLeito } from '@prisma/client'; // Importante para tratar erros
 import { Usuario } from '@prisma/client';
 import { UpdatePacienteDto } from './dto/update-paciente.dto';
+import { CheckInPacienteDto } from './dto/check-in-paciente.dto';
 
 @Injectable()
 export class PacientesService {
@@ -117,5 +118,56 @@ export class PacientesService {
       }
       throw error;
     }
+  }
+
+async checkIn(
+    pacienteId: number,
+    dto: CheckInPacienteDto,
+    usuarioLogado: Usuario,
+  ) {
+    const clinicaId = usuarioLogado.clinicaId;
+
+    // 1. Validar Paciente
+    // (Reutiliza o helper que já temos)
+    const paciente = await this.findOne(pacienteId, usuarioLogado);
+
+    // 2. Validar Leito (se existe e é da clínica)
+    const leito = await this.prisma.leito.findFirst({
+      where: { id: dto.leitoId, clinicaId: clinicaId },
+    });
+    if (!leito) {
+      throw new NotFoundException('Leito não encontrado nesta clínica.');
+    }
+
+    // 3. REGRA: Paciente já está em um leito?
+    // (Procuramos se algum leito já tem esse pacienteId)
+    const leitoAtualPaciente = await this.prisma.leito.findFirst({
+      where: { pacienteId: pacienteId, clinicaId: clinicaId },
+    });
+    if (leitoAtualPaciente) {
+      throw new ConflictException(
+        `Paciente já está alocado no Leito "${leitoAtualPaciente.nome}". Realize o check-out primeiro.`,
+      );
+    }
+
+    // 4. REGRA: Leito está disponível?
+    if (leito.status !== StatusLeito.DISPONIVEL) {
+      throw new ConflictException(
+        `Este leito não está DISPONÍVEL (Status atual: ${leito.status}).`,
+      );
+    }
+
+    // 5. AÇÃO: Alocar o paciente
+    // (Vincula o paciente ao leito e muda o status do leito)
+    return this.prisma.leito.update({
+      where: { id: dto.leitoId },
+      data: {
+        status: StatusLeito.OCUPADO,
+        pacienteId: pacienteId, // Vincula o paciente ao leito
+      },
+      include: {
+        quarto: { select: { nome: true } }
+      }
+    });
   }
 }

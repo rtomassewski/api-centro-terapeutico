@@ -11,6 +11,8 @@ import { EvolucoesService } from '../evolucoes/evolucoes.service';
 import { CreateEvolucaoDto } from '../evolucoes/dto/create-evolucao.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Request } from '@nestjs/common';
+import { CheckInPacienteDto } from './dto/check-in-paciente.dto'; 
+
 
 
 @Controller('pacientes')
@@ -59,6 +61,16 @@ export class PacientesController {
       updatePacienteDto,
       req.user,
     );
+  }
+  @Patch(':id/check-in')
+  @UseGuards(JwtAuthGuard, RolesGuard) // 5. Proteja
+  @Roles(NomePapel.ADMINISTRADOR, NomePapel.ENFERMEIRO) // 6. Defina quem pode
+  checkIn(
+    @Param('id', ParseIntPipe) pacienteId: number,
+    @Body() dto: CheckInPacienteDto,
+    @Request() req,
+  ) {
+    return this.pacientesService.checkIn(pacienteId, dto, req.user);
   }
 
 @Post(':id/evolucoes')
