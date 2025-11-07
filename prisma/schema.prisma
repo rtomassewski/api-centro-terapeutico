@@ -11,6 +11,14 @@ datasource db {
 
 // --- ENUMs (Tipos pré-definidos) ---
 
+// Enum para o status do Leito
+enum StatusLeito {
+  DISPONIVEL
+  OCUPADO
+  RESERVADO
+  MANUTENCAO
+}
+
 // Enum para as unidades de medida do estoque
 enum UnidadeMedida {
   UNIDADE   // Unidade (ex: comprimido, seringa)
@@ -145,6 +153,8 @@ model Paciente {
 
   agendamentos Agendamento[]
 
+  leito     Leito?
+
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
 }
@@ -166,9 +176,18 @@ model Evolucao {
 }
 model Prescricao {
   id              Int      @id @default(autoincrement())
-  medicamento     String
-  dosagem         String // ex: "100mg" ou "5ml"
-  posologia       String   @db.Text // ex: "1 comprimido a cada 8 horas por 7 dias"
+
+  // --- MUDANÇA CRÍTICA ---
+  // O 'medicamento' em texto foi substituído por um link a um 'Produto'
+  produto         Produto  @relation(fields: [produtoId], references: [id])
+  produtoId       Int
+
+  // Quantas unidades do 'produto' são dadas por dose
+  // Ex: 1 (comprimido), 10 (ml)
+  quantidade_por_dose Int  @default(1)
+
+  dosagem         String?  // Campo de texto (ex: "50mg", "10ml")
+  posologia       String   @db.Text // Instruções (ex: "A cada 8 horas")
   data_prescricao DateTime @default(now())
   ativa           Boolean  @default(true) // Para suspender a prescrição
 
@@ -209,6 +228,9 @@ model Clinica {
   produtos          Produto[]
   entradas_estoque  EntradaEstoque[]
   saidas_estoque    SaidaEstoque[]
+  alas    Ala[]
+  quartos Quarto[]
+  leitos  Leito[]
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -364,6 +386,7 @@ model Produto {
 
   entradas           EntradaEstoque[]
   saidas             SaidaEstoque[]
+  prescricoes Prescricao[]
 }
 
 // Registro de quando o estoque ENTRA (Compras)
@@ -406,5 +429,47 @@ model SaidaEstoque {
   // Esta saída foi causada por qual administração de medicamento?
   administracao   AdministracaoMedicamento? @relation(fields: [administracaoId], references: [id])
   administracaoId Int? @unique // 1-para-1: Uma administração só pode ter uma saída
+}
+// --- MODELOS DO MÓDULO DE INTERNAÇÃO (LEITOS) ---
+
+model Ala {
+  id        Int       @id @default(autoincrement())
+  nome      String    // Ex: "Ala Masculina A"
+  descricao String?
+
+  // Relações
+  clinica   Clinica   @relation(fields: [clinicaId], references: [id])
+  clinicaId Int
+  quartos   Quarto[]
+}
+
+model Quarto {
+  id        Int       @id @default(autoincrement())
+  nome      String    // Ex: "Quarto 101"
+  descricao String?
+
+  // Relações
+  ala       Ala       @relation(fields: [alaId], references: [id])
+  alaId     Int
+  clinica   Clinica   @relation(fields: [clinicaId], references: [id])
+  clinicaId Int
+  leitos    Leito[]
+}
+
+model Leito {
+  id        Int         @id @default(autoincrement())
+  nome      String      // Ex: "Leito A", "101A"
+  status    StatusLeito @default(DISPONIVEL)
+
+  // Relações
+  quarto    Quarto    @relation(fields: [quartoId], references: [id])
+  quartoId  Int
+  clinica   Clinica   @relation(fields: [clinicaId], references: [id])
+  clinicaId Int
+
+  // Vínculo com o Paciente
+  // Um Leito só pode ter UM Paciente (relação 1-para-1 opcional)
+  paciente  Paciente? @relation(fields: [pacienteId], references: [id])
+  pacienteId Int?      @unique // Garante que o paciente só está em 1 leito
 }
 

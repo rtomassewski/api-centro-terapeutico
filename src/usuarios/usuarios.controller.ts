@@ -19,31 +19,36 @@ import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { NomePapel } from '@prisma/client';
 
-// --- SEGURANÇA: Tranca o Controller inteiro ---
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(NomePapel.ADMINISTRADOR) // Apenas Admins da clínica podem gerenciar usuários
+// 1. A SEGURANÇA FOI REMOVIDA DO TOPO DA CLASSE
 @Controller('usuarios')
 export class UsuariosController {
   constructor(private readonly usuariosService: UsuariosService) {}
 
+  // 2. O 'create' (POST) agora é PÚBLICO
   @Post()
-  create(@Body() createUsuarioDto: CreateUsuarioDto, @Request() req) {
-    // O service agora pega o clinicaId do req.user
-    return this.usuariosService.create(createUsuarioDto, req.user);
+  create(@Body() createUsuarioDto: CreateUsuarioDto) {
+    // 3. A chamada do service foi simplificada (sem req.user)
+    return this.usuariosService.create(createUsuarioDto);
   }
 
+  // 4. OS OUTROS MÉTODOS CONTINUAM PROTEGIDOS
   @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(NomePapel.ADMINISTRADOR)
   findAll(@Request() req) {
-    // O service agora filtra pelo clinicaId do req.user
     return this.usuariosService.findAll(req.user);
   }
 
   @Get(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(NomePapel.ADMINISTRADOR)
   findOne(@Param('id', ParseIntPipe) id: number, @Request() req) {
     return this.usuariosService.findOne(id, req.user);
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(NomePapel.ADMINISTRADOR)
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateUsuarioDto: UpdateUsuarioDto,
@@ -53,6 +58,8 @@ export class UsuariosController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(NomePapel.ADMINISTRADOR)
   remove(@Param('id', ParseIntPipe) id: number, @Request() req) {
     return this.usuariosService.remove(id, req.user);
   }

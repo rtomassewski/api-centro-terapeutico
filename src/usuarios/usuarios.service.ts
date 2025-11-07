@@ -35,7 +35,7 @@ export class UsuariosService {
   /**
    * (CORRIGIDO) Criar um novo profissional
    */
-  async create(dto: CreateUsuarioDto, usuarioLogado: Usuario) {
+  async create(dto: CreateUsuarioDto) { // 1. Remova 'usuarioLogado'
     const saltRounds = 10;
     const senhaHash = await bcrypt.hash(dto.senha, saltRounds);
 
@@ -48,7 +48,7 @@ export class UsuariosService {
           registro_conselho: dto.registro_conselho,
           papelId: dto.papelId,
           ativo: true,
-          clinicaId: usuarioLogado.clinicaId, // 1. CORREÇÃO: Pega do token
+          clinicaId: dto.clinicaId, // 2. Pegue do DTO
         },
         select: {
           id: true,

@@ -94,12 +94,13 @@ export class PacientesController {
     @Body() dto: CreatePrescricaoDto,
     @Request() req,
   ) {
-    // NÃO defina 'usuarioLogadoId'
-    // Passe o 'req.user' inteiro
-    return this.prescricoesService.create( // <-- Esta é a sua linha 65
+    // --- CORREÇÃO AQUI ---
+    const usuarioLogadoId = req.user.id; // 1. Pegue o ID (o Número)
+
+    return this.prescricoesService.create(
       dto,
       pacienteId,
-      req.user, // <-- A chamada CORRETA
+      usuarioLogadoId, // 2. Passe o ID (o Número)
     );
   }
 

@@ -1,5 +1,5 @@
 // src/administracao-medicamentos/dto/administrar-medicamento.dto.ts
-import { IsEnum, IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsIn, IsNotEmpty, IsOptional, IsString, IsInt, IsPositive } from 'class-validator';
 import { StatusAdministracao } from '@prisma/client';
 
 export class AdministrarMedicamentoDto {
@@ -14,8 +14,13 @@ export class AdministrarMedicamentoDto {
   ])
   status: StatusAdministracao;
 
-  // 2. Notas (ex: "Paciente recusou", "Paciente dormindo")
+  @IsInt()
+  @IsPositive()
+  @IsOptional() 
+  quantidade_administrada?: number; 
+
   @IsString()
   @IsOptional()
   notas?: string;
 }
+

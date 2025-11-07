@@ -23,26 +23,27 @@ private async validarPaciente(pacienteId: number, clinicaId: number) {
   }
 
   async create(
-    dto: CreatePrescricaoDto,
-    pacienteId: number,
-    usuarioLogado: Usuario, // <-- A assinatura CORRETA (3 argumentos)
-  ) {
-    // Valide
-    await this.validarPaciente(pacienteId, usuarioLogado.clinicaId);
-    
-    return this.prisma.prescricao.create({
-      data: {
-        medicamento: dto.medicamento,
-        dosagem: dto.dosagem,
-        posologia: dto.posologia,
-        pacienteId: pacienteId,
-        usuarioId: usuarioLogado.id, // <-- Use o ID do objeto
-      },
-      include: {
-        usuario: { select: { nome_completo: true } }
-      }
-    });
-  }
+  dto: CreatePrescricaoDto,
+  pacienteId: number,
+  usuarioId: number,
+) {
+  // TODO: Validar se o produtoId é da clínica
+
+  return this.prisma.prescricao.create({
+    data: {
+      posologia: dto.posologia,
+      dosagem: dto.dosagem,
+      quantidade_por_dose: dto.quantidade_por_dose,
+      pacienteId: pacienteId,
+      usuarioId: usuarioId, // O ID do médico
+      produtoId: dto.produtoId, // <-- CORREÇÃO
+    },
+    include: {
+      usuario: { select: { nome_completo: true } },
+      produto: { select: { nome: true } } // <-- NOVO INCLUDE
+    }
+  });
+}
 
   async findAllByPaciente(pacienteId: number, usuarioLogado: Usuario) {
     // 7. Valide

@@ -1,14 +1,19 @@
 // src/prescricoes/dto/create-prescricao.dto.ts
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IsString, IsNotEmpty, IsInt, IsOptional, IsPositive } from 'class-validator';
 
 export class CreatePrescricaoDto {
-  @IsString()
+  @IsInt()
   @IsNotEmpty()
-  medicamento: string;
+  produtoId: number; // ID do Produto (ex: "Sertralina 50mg")
+
+  @IsInt()
+  @IsPositive()
+  @IsOptional()
+  quantidade_por_dose?: number; // Quantas unidades (ex: 1, 2)
 
   @IsString()
-  @IsNotEmpty()
-  dosagem: string; // ex: "100mg"
+  @IsOptional()
+  dosagem?: string; // Campo de texto (ex: "50mg")
 
   @IsString()
   @IsNotEmpty()

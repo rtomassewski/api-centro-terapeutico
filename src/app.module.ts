@@ -18,11 +18,12 @@ import { SinaisVitaisModule } from './sinais-vitais/sinais-vitais.module';
 import { ProdutosModule } from './produtos/produtos.module';
 import { EntradasEstoqueModule } from './entradas-estoque/entradas-estoque.module';
 import { SaidasEstoqueModule } from './saidas-estoque/saidas-estoque.module';
+import { AlasModule } from './alas/alas.module';
 
 @Module({
   imports: [ConfigModule.forRoot({
       isGlobal: true, 
-    }), UsuariosModule, PacientesModule, AuthModule, EvolucoesModule, PrescricoesModule, ClinicasModule, LicencasModule, PagamentosModule, CategoriasFinanceirasModule, TransacoesFinanceirasModule, AgendamentosModule, AdministracaoMedicamentosModule, SinaisVitaisModule, ProdutosModule, EntradasEstoqueModule, SaidasEstoqueModule],
+    }), UsuariosModule, PacientesModule, AuthModule, EvolucoesModule, PrescricoesModule, ClinicasModule, LicencasModule, PagamentosModule, CategoriasFinanceirasModule, TransacoesFinanceirasModule, AgendamentosModule, AdministracaoMedicamentosModule, SinaisVitaisModule, ProdutosModule, EntradasEstoqueModule, SaidasEstoqueModule, AlasModule],
   controllers: [AppController],
   providers: [AppService],
 })

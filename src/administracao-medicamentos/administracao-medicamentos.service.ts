@@ -1,5 +1,5 @@
 // src/administracao-medicamentos/administracao-medicamentos.service.ts
-import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { CreateAdministracaoMedicamentoDto } from './dto/create-administracao-medicamento.dto';
 import { UpdateAdministracaoMedicamentoDto } from './dto/update-administracao-medicamento.dto';
 import { PrismaService } from '../prisma.service';
@@ -79,35 +79,107 @@ export class AdministracaoMedicamentosService {
   }
 
   async administrar(
-    id: number,
-    dto: AdministrarMedicamentoDto,
-    usuarioLogado: Usuario,
-  ) {
-    // 1. Segurança: Valida se o registro existe e é da clínica do usuário
-    const administracao = await this.getAdministracao(
-      id,
-      usuarioLogado.clinicaId,
+  id: number,
+  dto: AdministrarMedicamentoDto,
+  usuarioLogado: Usuario,
+) {
+  // 1. Validação de Segurança (como antes)
+  const administracao = await this.getAdministracao(
+    id,
+    usuarioLogado.clinicaId,
+  );
+  if (administracao.status !== StatusAdministracao.PENDENTE) {
+    throw new ConflictException(
+      `Esta medicação já foi processada (Status: ${administracao.status}).`,
     );
+  }
 
-    // 2. Regra de Negócio: Só pode administrar o que está PENDENTE
-    if (administracao.status !== StatusAdministracao.PENDENTE) {
+  // 2. Se o status for 'ADMINISTRADO', o estoque é obrigatório
+  if (
+    dto.status === StatusAdministracao.ADMINISTRADO &&
+    (!dto.quantidade_administrada || dto.quantidade_administrada <= 0)
+  ) {
+    throw new BadRequestException( // (Importe o BadRequestException)
+      'A "quantidade_administrada" é obrigatória e deve ser positiva.',
+    );
+  }
+
+  // 3. Busca a Prescrição e o Produto associado
+  const prescricao = await this.prisma.prescricao.findUnique({
+    where: { id: administracao.prescricaoId },
+    include: { produto: true },
+  });
+  if (!prescricao || !prescricao.produto) {
+    throw new NotFoundException('Produto ou prescrição não encontrado.');
+  }
+  const produto = prescricao.produto;
+  const quantidade_para_sair = dto.quantidade_administrada || 0;
+
+  // 4. Se for 'ADMINISTRADO', verifica o estoque
+  if (dto.status === StatusAdministracao.ADMINISTRADO) {
+    if (produto.quantidade_estoque < quantidade_para_sair) {
       throw new ConflictException(
-        `Esta medicação já foi processada (Status: ${administracao.status}).`,
+        `Estoque insuficiente para "${produto.nome}". Estoque atual: ${produto.quantidade_estoque}`,
       );
     }
-
-    // 3. Atualiza o registro
-    return this.prisma.administracaoMedicamento.update({
-      where: { id: id },
-      data: {
-        status: dto.status,
-        notas: dto.notas,
-        // 4. Auditoria: Grava QUEM e QUANDO
-        data_hora_administracao: new Date(), // A hora exata da checagem
-        usuarioAdministrouId: usuarioLogado.id, // O ID do técnico logado
-      },
-    });
   }
+
+  // 5. A TRANSAÇÃO: 3 operações em 1
+  try {
+    const [saida, adm, produtoAtualizado] = await this.prisma.$transaction(async (tx) => {
+
+      // 5a. Atualiza a Administração (Enfermagem)
+      const admAtualizada = await tx.administracaoMedicamento.update({
+        where: { id: id },
+        data: {
+          status: dto.status,
+          notas: dto.notas,
+          data_hora_administracao: new Date(),
+          usuarioAdministrouId: usuarioLogado.id,
+        },
+      });
+
+      // Se não foi administrado (RECUSADO/NAO_ADMINISTRADO), pare aqui.
+      if (dto.status !== StatusAdministracao.ADMINISTRADO) {
+        return [null, admAtualizada, null]; // Retorna sem Saída/Produto
+      }
+
+      // 5b. Cria a Saída de Estoque
+      const novaSaida = await tx.saidaEstoque.create({
+        data: {
+          quantidade: quantidade_para_sair,
+          motivo: `Administração Paciente ID ${administracao.pacienteId}`,
+          clinicaId: usuarioLogado.clinicaId,
+          produtoId: produto.id,
+          usuarioId: usuarioLogado.id,
+          administracaoId: id, // <-- Vínculo
+        },
+      });
+
+      // 5c. Decrementa o Estoque do Produto
+      const produtoNovo = await tx.produto.update({
+        where: { id: produto.id },
+        data: {
+          quantidade_estoque: {
+            decrement: quantidade_para_sair,
+          },
+        },
+      });
+
+      return [novaSaida, admAtualizada, produtoNovo];
+    });
+
+    return {
+      administracao: adm,
+      saida_estoque: saida,
+      estoque_atual: produtoAtualizado?.quantidade_estoque,
+    };
+
+  } catch (error) {
+    // Se a transação falhar (ex: outro usuário pegou o último item)
+    throw new ConflictException(`Falha na transação de estoque: ${error.message}`);
+  }
+}
 
   async findAll(
     query: QueryAdministracaoMedicamentoDto,
@@ -141,10 +213,17 @@ export class AdministracaoMedicamentosService {
     return this.prisma.administracaoMedicamento.findMany({
       where: where,
       include: {
-        paciente: { select: { nome_completo: true } },
-        prescricao: { select: { medicamento: true, dosagem: true } },
-        usuario_administrou: { select: { nome_completo: true } },
+  paciente: { select: { nome_completo: true } },
+  prescricao: { // <-- CORREÇÃO
+    select: {
+      dosagem: true,
+      produto: { // Seleciona o produto relacionado
+        select: { nome: true }, // E o nome desse produto
       },
+    },
+  },
+  usuario_administrou: { select: { nome_completo: true } },
+},
       orderBy: {
         data_hora_prevista: 'desc', // Mais recentes primeiro
       },
@@ -165,10 +244,18 @@ export class AdministracaoMedicamentosService {
     return this.prisma.administracaoMedicamento.findUnique({
       where: { id: administracao.id },
       include: {
-        paciente: { select: { nome_completo: true } },
-        prescricao: { select: { medicamento: true, dosagem: true, posologia: true } },
-        usuario_administrou: { select: { nome_completo: true } },
+  paciente: { select: { nome_completo: true } },
+  prescricao: { // <-- CORREÇÃO
+    select: {
+      dosagem: true,
+      posologia: true,
+      produto: { // Seleciona o produto relacionado
+        select: { nome: true },
       },
+    },
+  },
+  usuario_administrou: { select: { nome_completo: true } },
+},
     });
   }
 }

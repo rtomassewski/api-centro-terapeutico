@@ -21,4 +21,7 @@ export class CreateUsuarioDto {
   @IsOptional() // O '?' torna o campo opcional
   registro_conselho?: string; // ex: "CRM-SP 123456"
 
+  @IsInt()
+  clinicaId: number;
+
 }
