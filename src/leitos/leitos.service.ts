@@ -82,7 +82,12 @@ export class LeitosService {
       where: where,
       include: {
         quarto: { select: { nome: true } },
-        paciente: { select: { nome_completo: true } }, // Mostra quem está no leito
+        paciente: { // <-- CORREÇÃO
+          select: { 
+            nome_completo: true,
+            id: true // Adiciona o ID do paciente
+          } 
+        },
       },
       orderBy: {
         nome: 'asc',

@@ -6,6 +6,7 @@ import { Prisma, StatusLeito } from '@prisma/client'; // Importante para tratar 
 import { Usuario } from '@prisma/client';
 import { UpdatePacienteDto } from './dto/update-paciente.dto';
 import { CheckInPacienteDto } from './dto/check-in-paciente.dto';
+import { QueryPacienteDto } from './dto/query-paciente.dto';
 
 @Injectable()
 export class PacientesService {
@@ -44,17 +45,21 @@ export class PacientesService {
       throw error;
     }
   }
-  async findAll(usuarioLogado: Usuario) {
-    // 3. Pega o ID da clínica do usuário logado no token
+  async findAll(query: QueryPacienteDto, usuarioLogado: Usuario) {
     const clinicaId = usuarioLogado.clinicaId;
 
-    // 4. Busca no banco
+    // 1. Filtro base
+    const where: Prisma.PacienteWhereInput = {
+      clinicaId: clinicaId,
+    };
+
+    if (query.semLeito === 'true') { // <-- Correção: Checa a string "true"
+      // Prisma: Encontre pacientes onde a relação 'leito' é nula
+      where.leito = null;
+    }
+
     return this.prisma.paciente.findMany({
-      // 5. O FILTRO DE SEGURANÇA!
-      where: {
-        clinicaId: clinicaId,
-      },
-      // 6. Seleciona apenas os campos úteis para uma lista
+      where: where,
       select: {
         id: true,
         nome_completo: true,
@@ -62,7 +67,6 @@ export class PacientesService {
         data_nascimento: true,
         status: true,
       },
-      // 7. Ordena por nome
       orderBy: {
         nome_completo: 'asc',
       },

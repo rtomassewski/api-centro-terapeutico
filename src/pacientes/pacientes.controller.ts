@@ -3,7 +3,7 @@ import { CreatePrescricaoDto } from '../prescricoes/dto/create-prescricao.dto';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { NomePapel } from '@prisma/client';
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, ParseIntPipe, Query } from '@nestjs/common';
 import { PacientesService } from './pacientes.service';
 import { CreatePacienteDto } from './dto/create-paciente.dto';
 import { UpdatePacienteDto } from './dto/update-paciente.dto';
@@ -12,6 +12,7 @@ import { CreateEvolucaoDto } from '../evolucoes/dto/create-evolucao.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Request } from '@nestjs/common';
 import { CheckInPacienteDto } from './dto/check-in-paciente.dto'; 
+import { QueryPacienteDto } from './dto/query-paciente.dto';
 
 
 
@@ -32,12 +33,19 @@ export class PacientesController {
     return this.pacientesService.create(createPacienteDto, req.user);
   }
   
-  @Get() // Rota: GET /pacientes
-  @UseGuards(JwtAuthGuard) // 2. Proteja a rota
+  @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles( // 1. CORREÇÃO DE PERMISSÃO: Todos podem ver a lista
+    NomePapel.ADMINISTRADOR,
+    NomePapel.ENFERMEIRO,
+    NomePapel.TECNICO,
+    NomePapel.MEDICO
+  ) 
   findAll(
-    @Request() req, // 3. Pegue o usuário logado
+    @Request() req,
+    @Query() query: QueryPacienteDto, // 2. CORREÇÃO DA API: Aceita o filtro
   ) {
-    return this.pacientesService.findAll(req.user);
+    return this.pacientesService.findAll(query, req.user);
   }
 
   @Get(':id') // Rota: GET /pacientes/1
