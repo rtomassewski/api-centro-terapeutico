@@ -170,4 +170,39 @@ async checkIn(
       }
     });
   }
+
+async checkOut(pacienteId: number, usuarioLogado: Usuario) {
+    const clinicaId = usuarioLogado.clinicaId;
+
+    // 1. Validar Paciente (garante que o ID do paciente é válido e da clínica)
+    await this.findOne(pacienteId, usuarioLogado);
+
+    // 2. Encontrar o leito que este paciente está ocupando
+    const leitoOcupado = await this.prisma.leito.findFirst({
+      where: {
+        pacienteId: pacienteId,
+        clinicaId: clinicaId,
+        status: StatusLeito.OCUPADO,
+      },
+    });
+
+    // 3. REGRA: Paciente não está internado?
+    if (!leitoOcupado) {
+      throw new NotFoundException(
+        'Paciente não encontrado em nenhum leito ocupado.',
+      );
+    }
+
+    // 4. AÇÃO: Liberar o leito
+    // (Muda o status do leito para DISPONIVEL e remove o pacienteId)
+    return this.prisma.leito.update({
+      where: {
+        id: leitoOcupado.id,
+      },
+      data: {
+        status: StatusLeito.DISPONIVEL,
+        pacienteId: null, // Desvincula o paciente
+      },
+    });
+  }
 }

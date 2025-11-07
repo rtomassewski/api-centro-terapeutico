@@ -73,6 +73,17 @@ export class PacientesController {
     return this.pacientesService.checkIn(pacienteId, dto, req.user);
   }
 
+  @Patch(':id/check-out')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(NomePapel.ADMINISTRADOR, NomePapel.ENFERMEIRO) // Mesmas permissões
+  checkOut(
+    @Param('id', ParseIntPipe) pacienteId: number,
+    @Request() req,
+    // (Note: Não há @Body() pois não precisamos de um DTO)
+  ) {
+    return this.pacientesService.checkOut(pacienteId, req.user);
+  }
+
 @Post(':id/evolucoes')
   @UseGuards(JwtAuthGuard)
   async createEvolucao(
