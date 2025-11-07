@@ -46,14 +46,17 @@ private async validarPaciente(pacienteId: number, clinicaId: number) {
 }
 
   async findAllByPaciente(pacienteId: number, usuarioLogado: Usuario) {
-    // 7. Valide
     await this.validarPaciente(pacienteId, usuarioLogado.clinicaId);
+    
     return this.prisma.prescricao.findMany({
       where: { pacienteId: pacienteId },
       orderBy: { data_prescricao: 'desc' },
       include: {
-        usuario: { select: { nome_completo: true, papel: { select: { nome: true }} } }
-      }
+        usuario: { select: { nome_completo: true } },
+        produto: {
+          select: { nome: true }
+        },
+    },
     });
-  }
+}
 }
