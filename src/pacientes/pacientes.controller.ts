@@ -13,6 +13,9 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Request } from '@nestjs/common';
 import { CheckInPacienteDto } from './dto/check-in-paciente.dto'; 
 import { QueryPacienteDto } from './dto/query-paciente.dto';
+import { HistoricoMedicoService } from '../historico-medico/historico-medico.service';
+import { CreateHistoricoMedicoDto } from '../historico-medico/dto/create-historico-medico.dto';
+import { UpdateHistoricoMedicoDto } from '../historico-medico/dto/update-historico-medico.dto';
 
 
 
@@ -20,7 +23,8 @@ import { QueryPacienteDto } from './dto/query-paciente.dto';
 export class PacientesController {
   constructor(private readonly pacientesService: PacientesService,
               private readonly evolucoesService: EvolucoesService,
-              private readonly prescricoesService: PrescricoesService,)
+              private readonly prescricoesService: PrescricoesService, 
+              private readonly historicoMedicoService: HistoricoMedicoService,)
  {}
 
 @Post()
@@ -90,6 +94,37 @@ export class PacientesController {
     // (Note: Não há @Body() pois não precisamos de um DTO)
   ) {
     return this.pacientesService.checkOut(pacienteId, req.user);
+  }
+  @Post(':id/historico')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(NomePapel.MEDICO, NomePapel.ENFERMEIRO) // Quem pode criar
+  createHistorico(
+    @Param('id', ParseIntPipe) pacienteId: number,
+    @Body() dto: CreateHistoricoMedicoDto,
+    @Request() req,
+  ) {
+    return this.historicoMedicoService.create(pacienteId, dto, req.user);
+  }
+
+  @Get(':id/historico')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(NomePapel.MEDICO, NomePapel.ENFERMEIRO, NomePapel.TECNICO, NomePapel.PSICOLOGO) // Quem pode ler
+  getHistorico(
+    @Param('id', ParseIntPipe) pacienteId: number,
+    @Request() req,
+  ) {
+    return this.historicoMedicoService.findOneByPacienteId(pacienteId, req.user);
+  }
+
+  @Patch(':id/historico')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(NomePapel.MEDICO, NomePapel.ENFERMEIRO) // Quem pode editar
+  updateHistorico(
+    @Param('id', ParseIntPipe) pacienteId: number,
+    @Body() dto: UpdateHistoricoMedicoDto,
+    @Request() req,
+  ) {
+    return this.historicoMedicoService.update(pacienteId, dto, req.user);
   }
 
 @Post(':id/evolucoes')

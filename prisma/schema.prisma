@@ -84,6 +84,39 @@ enum StatusAgendamento {
 }
 
 // --- MODELOS (Tabelas do Banco) ---
+// --- MODELO DO MÓDULO DE HISTÓRICO MÉDICO (ANAMNESE) ---
+
+model HistoricoMedico {
+  id        Int       @id @default(autoincrement())
+
+  // 1. Vínculos
+  paciente  Paciente  @relation(fields: [pacienteId], references: [id])
+  pacienteId Int      @unique // Um Paciente só tem UM Histórico Médico
+
+  clinica   Clinica   @relation(fields: [clinicaId], references: [id])
+  clinicaId Int
+
+  // 2. Auditoria (Quem preencheu e quando)
+  usuario_preencheu   Usuario   @relation(fields: [usuarioPreencheuId], references: [id])
+  usuarioPreencheuId  Int
+  data_preenchimento  DateTime  @default(now())
+
+  // 3. Campos de Texto do Histórico
+  // (Usamos 'String?' e '@db.Text' para campos longos e opcionais)
+
+  alergias            String?   @db.Text // Ex: "Dipirona, Penicilina"
+  condicoes_previas   String?   @db.Text // Ex: "Hipertensão, Diabetes Tipo 2"
+  medicamentos_uso_continuo String? @db.Text
+
+  historico_familiar    String?   @db.Text // Ex: "Pai (Cardíaco), Mãe (Diabetes)"
+  historico_social      String?   @db.Text // Ex: "Tabagista, etilista social"
+
+  // Específico para dependência química
+  historico_uso_substancias String? @db.Text // "Histórico de uso de...", "Tratamentos anteriores..."
+
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+}
 
 model Papel {
   id        Int         @id @default(autoincrement())
@@ -115,6 +148,7 @@ model Usuario {
   sinais_vitais_aferidos SinalVital[]
   entradas_estoque_registradas EntradaEstoque[]
   saidas_estoque_registradas   SaidaEstoque[]
+  historicos_preenchidos HistoricoMedico[]
 
   // --- LINHA CORRIGIDA ---
   // O @relation foi movido para o final da linha.
@@ -154,6 +188,7 @@ model Paciente {
   agendamentos Agendamento[]
 
   leito     Leito?
+  historico_medico   HistoricoMedico?
 
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
@@ -231,6 +266,7 @@ model Clinica {
   alas    Ala[]
   quartos Quarto[]
   leitos  Leito[]
+  historicos_medicos HistoricoMedico[]
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
