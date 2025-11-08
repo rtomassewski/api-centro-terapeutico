@@ -11,6 +11,13 @@ datasource db {
 
 // --- ENUMs (Tipos pré-definidos) ---
 
+enum RatingComportamento {
+  OTIMO
+  BOM
+  RUIM
+  PESSIMO
+}
+
 // Enum para o status do Leito
 enum StatusLeito {
   DISPONIVEL
@@ -149,6 +156,7 @@ model Usuario {
   entradas_estoque_registradas EntradaEstoque[]
   saidas_estoque_registradas   SaidaEstoque[]
   historicos_preenchidos HistoricoMedico[]
+  notas_comportamento_registradas NotaComportamento[]
 
   // --- LINHA CORRIGIDA ---
   // O @relation foi movido para o final da linha.
@@ -186,6 +194,7 @@ model Paciente {
   sinais_vitais SinalVital[]
 
   agendamentos Agendamento[]
+  notas_comportamento NotaComportamento[]
 
   leito     Leito?
   historico_medico   HistoricoMedico?
@@ -267,6 +276,7 @@ model Clinica {
   quartos Quarto[]
   leitos  Leito[]
   historicos_medicos HistoricoMedico[]
+  notas_comportamento NotaComportamento[]
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -507,5 +517,24 @@ model Leito {
   // Um Leito só pode ter UM Paciente (relação 1-para-1 opcional)
   paciente  Paciente? @relation(fields: [pacienteId], references: [id])
   pacienteId Int?      @unique // Garante que o paciente só está em 1 leito
+}
+// --- MODELO DO MÓDULO DE NOTAS DE COMPORTAMENTO ---
+
+model NotaComportamento {
+  id            Int                 @id @default(autoincrement())
+  data_registro DateTime            @default(now())
+
+  nota          RatingComportamento // OTIMO, BOM, RUIM, PESSIMO
+  observacao    String?             @db.Text // Texto do Coordenador
+
+  // Relações de Segurança e Auditoria
+  clinica           Clinica             @relation(fields: [clinicaId], references: [id])
+  clinicaId         Int
+
+  paciente          Paciente            @relation(fields: [pacienteId], references: [id])
+  pacienteId        Int
+
+  usuario_registrou Usuario             @relation(fields: [usuarioRegistrouId], references: [id])
+  usuarioRegistrouId Int                // Quem registrou (Coordenador)
 }
 
