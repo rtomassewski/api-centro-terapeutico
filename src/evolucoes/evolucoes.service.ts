@@ -1,9 +1,9 @@
 // src/evolucoes/evolucoes.service.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma.service';
+import { PrismaService,  } from '../prisma.service';
 import { CreateEvolucaoDto } from './dto/create-evolucao.dto';
 import { Usuario } from '@prisma/client';
-
+import { Prisma, NomePapel, TipoEvolucao, Usuario } from '@prisma/client';
 @Injectable()
 export class EvolucoesService {
   constructor(private prisma: PrismaService) {}

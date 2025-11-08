@@ -10,6 +10,12 @@ datasource db {
 }
 
 // --- ENUMs (Tipos pré-definidos) ---
+// Enum para o tipo de evolução (Sigilo)
+enum TipoEvolucao {
+  GERAL        // Todos podem ver (Enfermagem, Médico, etc.)
+  PSICOLOGICA  // Apenas Psicólogos podem ver
+  TERAPEUTICA  // Apenas Terapeutas podem ver
+}
 
 enum RatingComportamento {
   OTIMO
@@ -51,6 +57,7 @@ enum NomePapel {
   TERAPEUTA
   COORDENADOR
   TECNICO
+  ATENDENTE
 }
 
 // Define os status possíveis de um paciente
@@ -207,6 +214,8 @@ model Evolucao {
   id          Int      @id @default(autoincrement())
   descricao   String   @db.Text // Permite textos longos
   data_evolucao DateTime @default(now())
+
+  tipo        TipoEvolucao @default(GERAL)
 
   // Relação: A Evolução foi escrita por UM Usuário (profissional)
   usuario     Usuario  @relation(fields: [usuarioId], references: [id])

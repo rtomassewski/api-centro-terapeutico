@@ -34,14 +34,14 @@ export class UsuariosController {
   // 4. OS OUTROS MÉTODOS CONTINUAM PROTEGIDOS
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(NomePapel.ADMINISTRADOR)
+  @Roles(NomePapel.ADMINISTRADOR, NomePapel.ATENDENTE)
   findAll(@Request() req) {
     return this.usuariosService.findAll(req.user);
   }
 
   @Get(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(NomePapel.ADMINISTRADOR)
+  @Roles(NomePapel.ADMINISTRADOR, NomePapel.ATENDENTE)
   findOne(@Param('id', ParseIntPipe) id: number, @Request() req) {
     return this.usuariosService.findOne(id, req.user);
   }

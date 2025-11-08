@@ -17,14 +17,18 @@ import { CreateAgendamentoDto } from './dto/create-agendamento.dto';
 import { QueryAgendamentoDto } from './dto/query-agendamento.dto';
 import { UpdateAgendamentoDto } from './dto/update-agendamento.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard'; // 1. Adicione
+import { Roles } from '../auth/roles.decorator'; // 2. Adicione
+import { NomePapel } from '@prisma/client';
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard) // 3. Adicione
 @Controller('agendamentos')
 export class AgendamentosController {
   constructor(private readonly agendamentosService: AgendamentosService) {}
 
   @Post()
   @UseGuards(JwtAuthGuard) // 1. Protegido por login
+  @Roles(NomePapel.ADMINISTRADOR, NomePapel.ENFERMEIRO, NomePapel.ATENDENTE)
   create(@Body() createDto: CreateAgendamentoDto, @Request() req) {
     // 2. Passa o DTO e o usuário logado (para pegar o clinicaId)
     return this.agendamentosService.create(createDto, req.user);
@@ -32,12 +36,18 @@ export class AgendamentosController {
 
   // (Deixe os outros métodos gerados pelo CLI comentados por enquanto)
  @Get()
-  @UseGuards(JwtAuthGuard) // 4. Protegido por login
+  // 6. Adicione @Roles (incluindo Atendente)
+  @Roles(
+    NomePapel.ADMINISTRADOR,
+    NomePapel.ENFERMEIRO,
+    NomePapel.TECNICO,
+    NomePapel.MEDICO,
+    NomePapel.ATENDENTE
+  )
   findAll(
-    @Query() query: QueryAgendamentoDto, // 5. Pega os filtros da URL
+    @Query() query: QueryAgendamentoDto,
     @Request() req,
   ) {
-    // 6. O 'ValidationPipe' (em main.ts) já validou e transformou os filtros
     return this.agendamentosService.findAll(query, req.user);
   }
 @Get(':id')

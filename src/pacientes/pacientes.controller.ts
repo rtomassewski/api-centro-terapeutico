@@ -43,7 +43,8 @@ export class PacientesController {
     NomePapel.ADMINISTRADOR,
     NomePapel.ENFERMEIRO,
     NomePapel.TECNICO,
-    NomePapel.MEDICO
+    NomePapel.MEDICO,
+    NomePapel.ATENDENTE
   ) 
   findAll(
     @Request() req,
@@ -52,11 +53,19 @@ export class PacientesController {
     return this.pacientesService.findAll(query, req.user);
   }
 
-  @Get(':id') // Rota: GET /pacientes/1
-  @UseGuards(JwtAuthGuard) // 2. Proteja a rota
+  @Get(':id')
+  @UseGuards(JwtAuthGuard)
+  // (Precisamos adicionar @Roles aqui, pois 'findOne' não tem)
+  @Roles(
+    NomePapel.ADMINISTRADOR,
+    NomePapel.ENFERMEIRO,
+    NomePapel.TECNICO,
+    NomePapel.MEDICO,
+    NomePapel.ATENDENTE, // <-- ADICIONE
+  )
   findOne(
-    @Param('id', ParseIntPipe) pacienteId: number, // 3. Pega o ID da URL
-    @Request() req, // 4. Pega o usuário logado
+    @Param('id', ParseIntPipe) pacienteId: number,
+    @Request() req,
   ) {
     return this.pacientesService.findOne(pacienteId, req.user);
   }
