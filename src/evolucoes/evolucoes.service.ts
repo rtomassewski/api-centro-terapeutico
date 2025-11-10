@@ -1,67 +1,111 @@
 // src/evolucoes/evolucoes.service.ts
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService,  } from '../prisma.service';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { CreateEvolucaoDto } from './dto/create-evolucao.dto';
-import { Usuario } from '@prisma/client';
+import { PrismaService } from '../prisma.service';
+
+// 1. CORREÇÃO: Imports combinados em uma única linha
 import { Prisma, NomePapel, TipoEvolucao, Usuario } from '@prisma/client';
+
 @Injectable()
 export class EvolucoesService {
   constructor(private prisma: PrismaService) {}
 
   /**
-   * Função privada para validar se o paciente existe E pertence à clínica do usuário
+   * Helper: Valida o paciente e a clínica
    */
   private async validarPaciente(pacienteId: number, clinicaId: number) {
     const paciente = await this.prisma.paciente.findFirst({
-      where: {
-        id: pacienteId,
-        clinicaId: clinicaId,
-      },
+      where: { id: pacienteId, clinicaId: clinicaId },
     });
-
     if (!paciente) {
-      throw new NotFoundException(
-        'Paciente não encontrado ou não pertence a esta clínica.',
-      );
+      throw new NotFoundException('Paciente não encontrado nesta clínica.');
     }
     return paciente;
   }
 
-  // --- MÉTODO create ATUALIZADO ---
+  /**
+   * CRIAR uma nova Evolução (com etiqueta de sigilo)
+   */
   async create(
     dto: CreateEvolucaoDto,
     pacienteId: number,
-    usuarioLogado: Usuario,
+    usuarioLogado: any, // 2. CORREÇÃO: Mudado de 'Usuario' para 'any'
   ) {
     await this.validarPaciente(pacienteId, usuarioLogado.clinicaId);
+
+    // --- LÓGICA DE SIGILO (create) ---
+    let tipo: TipoEvolucao = TipoEvolucao.GERAL;
+    const papelUsuario = usuarioLogado.papel.nome; // Esta linha agora funciona
+
+    if (papelUsuario === NomePapel.PSICOLOGO) {
+      tipo = TipoEvolucao.PSICOLOGICA;
+    } else if (papelUsuario === NomePapel.TERAPEUTA) {
+      tipo = TipoEvolucao.TERAPEUTICA;
+    }
+    // --- FIM DA LÓGICA ---
 
     return this.prisma.evolucao.create({
       data: {
         descricao: dto.descricao,
         pacienteId: pacienteId,
         usuarioId: usuarioLogado.id,
-      }, // <--- VÍRGULA CORRIGIDA (Erro 1)
+        tipo: tipo,
+      },
       include: {
-        // (Este é o seu código que estava na linha 40)
         usuario: {
           select: {
             nome_completo: true,
-            papel: {
-              select: { nome: true },
-            },
+            papel: { select: { nome: true } },
           },
         },
       },
     });
-  } // <--- CHAVE DE FECHAMENTO CORRIGIDA (Erros 2-7)
+  }
 
-  // --- MÉTODO findAllByPaciente ATUALIZADO ---
-  async findAllByPaciente(pacienteId: number, usuarioLogado: Usuario) {
+  /**
+   * LISTAR evoluções (com filtro de sigilo)
+   */
+  async findAllByPaciente(
+    pacienteId: number,
+    usuarioLogado: any, // 3. CORREÇÃO: Mudado de 'Usuario' para 'any'
+  ) {
     await this.validarPaciente(pacienteId, usuarioLogado.clinicaId);
+
+    const papelUsuario = usuarioLogado.papel.nome; // Esta linha agora funciona
+
+    // --- LÓGICA DE SIGILO (read) ---
+    const tiposVisiveis: TipoEvolucao[] = [
+      TipoEvolucao.GERAL,
+    ];
+
+    if (papelUsuario === NomePapel.PSICOLOGO) {
+      tiposVisiveis.push(TipoEvolucao.PSICOLOGICA);
+    }
+    
+    if (papelUsuario === NomePapel.TERAPEUTA) {
+      tiposVisiveis.push(TipoEvolucao.TERAPEUTICA);
+    }
+
+    if (
+      papelUsuario === NomePapel.ADMINISTRADOR ||
+      papelUsuario === NomePapel.COORDENADOR ||
+      papelUsuario === NomePapel.MEDICO
+    ) {
+      tiposVisiveis.push(TipoEvolucao.PSICOLOGICA, TipoEvolucao.TERAPEUTICA);
+    }
+    // --- FIM DA LÓGICA ---
 
     return this.prisma.evolucao.findMany({
       where: {
         pacienteId: pacienteId,
+        tipo: {
+          in: tiposVisiveis,
+        },
       },
       orderBy: {
         data_evolucao: 'desc',
@@ -70,9 +114,7 @@ export class EvolucoesService {
         usuario: {
           select: {
             nome_completo: true,
-            papel: {
-              select: { nome: true },
-            },
+            papel: { select: { nome: true } },
           },
         },
       },

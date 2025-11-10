@@ -44,7 +44,9 @@ export class PacientesController {
     NomePapel.ENFERMEIRO,
     NomePapel.TECNICO,
     NomePapel.MEDICO,
-    NomePapel.ATENDENTE
+    NomePapel.ATENDENTE,
+    NomePapel.PSICOLOGO, // <-- ADICIONE
+    NomePapel.TERAPEUTA
   ) 
   findAll(
     @Request() req,
@@ -61,7 +63,9 @@ export class PacientesController {
     NomePapel.ENFERMEIRO,
     NomePapel.TECNICO,
     NomePapel.MEDICO,
-    NomePapel.ATENDENTE, // <-- ADICIONE
+    NomePapel.ATENDENTE,
+    NomePapel.PSICOLOGO, // <-- ADICIONE
+    NomePapel.TERAPEUTA // <-- ADICIONE
   )
   findOne(
     @Param('id', ParseIntPipe) pacienteId: number,
@@ -122,7 +126,7 @@ export class PacientesController {
     @Param('id', ParseIntPipe) pacienteId: number,
     @Request() req,
   ) {
-    return this.historicoMedicoService.findOneByPacienteId(pacienteId, req.user);
+    return this.historicoMedicoService.findAllByPacienteId(pacienteId, req.user); // <-- CORREÇÃO
   }
 
   @Patch(':id/historico')

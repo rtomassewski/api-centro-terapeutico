@@ -105,28 +105,29 @@ model HistoricoMedico {
 
   // 1. Vínculos
   paciente  Paciente  @relation(fields: [pacienteId], references: [id])
-  pacienteId Int      @unique // Um Paciente só tem UM Histórico Médico
+  pacienteId Int
+
+  // --- MUDANÇA 1: REMOVER O '@unique' ---
+  // (Um paciente agora pode ter vários históricos)
 
   clinica   Clinica   @relation(fields: [clinicaId], references: [id])
   clinicaId Int
 
-  // 2. Auditoria (Quem preencheu e quando)
+  // --- MUDANÇA 2: ADICIONAR O 'tipo' ---
+  tipo      TipoEvolucao @default(GERAL) // (Reutilizando o Enum que já criamos)
+
+  // 2. Auditoria
   usuario_preencheu   Usuario   @relation(fields: [usuarioPreencheuId], references: [id])
   usuarioPreencheuId  Int
   data_preenchimento  DateTime  @default(now())
 
   // 3. Campos de Texto do Histórico
-  // (Usamos 'String?' e '@db.Text' para campos longos e opcionais)
-
-  alergias            String?   @db.Text // Ex: "Dipirona, Penicilina"
-  condicoes_previas   String?   @db.Text // Ex: "Hipertensão, Diabetes Tipo 2"
+  alergias            String?   @db.Text
+  condicoes_previas   String?   @db.Text
   medicamentos_uso_continuo String? @db.Text
-
-  historico_familiar    String?   @db.Text // Ex: "Pai (Cardíaco), Mãe (Diabetes)"
-  historico_social      String?   @db.Text // Ex: "Tabagista, etilista social"
-
-  // Específico para dependência química
-  historico_uso_substancias String? @db.Text // "Histórico de uso de...", "Tratamentos anteriores..."
+  historico_familiar    String?   @db.Text
+  historico_social      String?   @db.Text
+  historico_uso_substancias String? @db.Text
 
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
@@ -204,7 +205,7 @@ model Paciente {
   notas_comportamento NotaComportamento[]
 
   leito     Leito?
-  historico_medico   HistoricoMedico?
+  historicos_medicos HistoricoMedico[]
 
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
