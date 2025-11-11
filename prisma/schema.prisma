@@ -147,6 +147,7 @@ model Usuario {
   senha_hash        String
   registro_conselho String?
   ativo             Boolean     @default(true)
+  assinatura_url    String?   // URL para a imagem da assinatura
   
   papel             Papel       @relation(fields: [papelId], references: [id])
   papelId           Int
@@ -265,6 +266,9 @@ model Clinica {
   nome_fantasia String
   cnpj         String   @unique // CNPJ do seu cliente
   ativa        Boolean  @default(true)
+  logo_url     String?   // URL para a imagem do logo
+  endereco     String?   @db.Text
+  telefone     String?
   
   // Relações:
   // Uma Clínica tem UMA Licença

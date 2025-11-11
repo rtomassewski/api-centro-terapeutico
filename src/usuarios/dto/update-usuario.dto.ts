@@ -1,5 +1,5 @@
 // src/usuarios/dto/update-usuario.dto.ts
-import { IsInt, IsOptional, IsString, IsBoolean } from 'class-validator';
+import { IsInt, IsOptional, IsString, IsBoolean, IsUrl } from 'class-validator';
 
 // Não vamos usar o PartialType(CreateUsuarioDto) porque NÃO queremos
 // permitir a atualização de 'email' ou 'senha' por esta rota.
@@ -23,4 +23,8 @@ export class UpdateUsuarioDto {
   @IsBoolean()
   @IsOptional()
   ativo?: boolean; // Permite o admin reativar um usuário
+  
+  @IsUrl({}, { message: 'O URL da assinatura deve ser um link válido (ex: https://...)' })
+  @IsOptional()
+  assinatura_url?: string;
 }
