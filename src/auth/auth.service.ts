@@ -4,6 +4,7 @@ import { UsuariosService } from '../usuarios/usuarios.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { StatusLicenca, TipoPlano } from '@prisma/client';
+import { UpdatePerfilDto } from './dto/update-perfil.dto';
 
 @Injectable()
 export class AuthService {
@@ -60,7 +61,27 @@ export class AuthService {
         papelId: usuario.papelId,
         clinicaId: usuario.clinicaId,
         licenca: licenca,
+        clinica: usuario.clinica,
       }
     };
+  }
+  async updatePerfil(userId: number, dto: UpdatePerfilDto) {
+    // A validação do DTO já impediu que campos
+    // sensíveis (como papelId) fossem enviados.
+    
+    return this.prisma.usuario.update({
+      where: {
+        id: userId, // Atualiza apenas o ID do token
+      },
+      data: dto, // Passa os dados permitidos
+      select: {
+        // Retorna o perfil atualizado (sem a senha)
+        id: true,
+        nome_completo: true,
+        email: true,
+        registro_conselho: true,
+        assinatura_url: true,
+      },
+    });
   }
 }

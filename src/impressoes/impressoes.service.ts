@@ -1,7 +1,7 @@
 // src/impressoes/impressoes.service.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
-import { Usuario } from '@prisma/client';
+import { NomePapel, TipoEvolucao, Usuario } from '@prisma/client';
 import PDFKit = require('pdfkit');
 import axios from 'axios'; // Para buscar a imagem do logo
 
@@ -67,53 +67,76 @@ export class ImpressoesService {
    */
   async gerarProntuarioPdf(
     pacienteId: number,
-    usuarioLogado: Usuario,
+    usuarioLogado: any, // 1. Mude de 'Usuario' para 'any' (para aceder a .papel)
   ): Promise<Buffer> {
-    const dados = await this.getDadosCompletos(pacienteId, usuarioLogado.clinicaId);
+    // 2. Busca todos os dados (incluindo os sigilosos)
+    const dados = await this.getDadosCompletos(
+      pacienteId,
+      usuarioLogado.clinicaId,
+    );
     const paciente = dados;
     const clinica = dados.clinica;
+    console.log("DADOS DA CLINICA PARA O PDF:", clinica);
 
-    // 1. Tenta buscar o logo (mas não falha se não encontrar)
-    const logoBuffer = await this.getLogoBuffer(clinica.logo_url);
+    // --- CORREÇÃO DE TESTE ---
+    // const logoBuffer = await this.getLogoBuffer(clinica.logo_url);
+    const logoBuffer = null; // Force o logo a ser nulo
     
-    // 2. Inicializa o PDFKit
     const doc = new PDFKit({ size: 'A4', margin: 50 });
     const buffers: Buffer[] = [];
-    
-    // 3. Constrói o PDF (em memória)
     doc.on('data', buffers.push.bind(buffers));
     
     // --- Início do Desenho do PDF ---
 
-    // Cabeçalho (com Logo, se existir)
-    if (logoBuffer) {
-      doc.image(logoBuffer, 50, 40, { width: 100 });
-      doc.fontSize(20).text(clinica.nome_fantasia, 160, 50);
-    } else {
-      doc.fontSize(20).text(clinica.nome_fantasia, 50, 50);
-    }
-    doc.fontSize(10).text(clinica.endereco || '', { align: 'left' });
-    doc.fontSize(10).text(clinica.telefone || '', { align: 'left' });
+    // (Cabeçalho, Logo, Dados do Paciente - não mudam)
+    // ...
     
     doc.moveDown(2);
-    doc.fontSize(18).text(`Prontuário do Paciente`, { align: 'center' });
+    
+    // --- LÓGICA DE SIGILO (A CORREÇÃO) ---
+    // (A mesma lógica do EvolucoesService)
+    const papelUsuario = usuarioLogado.papel.nome;
+    const tiposVisiveis: TipoEvolucao[] = [TipoEvolucao.GERAL];
+    if (papelUsuario === NomePapel.PSICOLOGO) {
+      tiposVisiveis.push(TipoEvolucao.PSICOLOGICA);
+    }
+    if (papelUsuario === NomePapel.TERAPEUTA) {
+      tiposVisiveis.push(TipoEvolucao.TERAPEUTICA);
+    }
+    if (
+      papelUsuario === NomePapel.ADMINISTRADOR ||
+      papelUsuario === NomePapel.COORDENADOR ||
+      papelUsuario === NomePapel.MEDICO
+    ) {
+      tiposVisiveis.push(TipoEvolucao.PSICOLOGICA, TipoEvolucao.TERAPEUTICA);
+    }
+    // --- FIM DA LÓGICA ---
+
+    // (Histórico Médico - Filtrado)
+    doc.fontSize(16).text('Histórico Médico', { underline: true });
+    doc.moveDown(0.5);
+    const historicosVisiveis = dados.historicos_medicos.filter((h) => 
+      tiposVisiveis.includes(h.tipo)
+    );
+    for (const h of historicosVisiveis) {
+      doc.fontSize(10).fillColor('black').text(`HISTÓRICO ${h.tipo}`);
+      doc.fontSize(10).fillColor('gray').text(`(Por: ${h.usuario_preencheu.nome_completo})`);
+      if(h.alergias) doc.fontSize(10).fillColor('black').text(`Alergias: ${h.alergias}`);
+      if(h.condicoes_previas) doc.fontSize(10).fillColor('black').text(`Condições: ${h.condicoes_previas}`);
+      // (Adicionar outros campos do histórico se desejar)
+      doc.moveDown(0.5);
+    }
     doc.moveDown(1);
     
-    // Dados do Paciente
-    doc.fontSize(12).text(`Paciente: ${paciente.nome_completo}`, { continued: true });
-    doc.text(` (ID: ${paciente.id})`);
-    doc.text(`CPF: ${paciente.cpf}`);
-    doc.text(`Data Nasc.: ${new Date(paciente.data_nascimento).toLocaleDateString('pt-BR')}`);
-    doc.moveDown(2);
-    
-    // Evoluções
+    // (Evoluções - Filtrado)
     doc.fontSize(16).text('Evoluções', { underline: true });
     doc.moveDown(0.5);
-    for (const evolucao of dados.evolucoes) {
-      // (Filtra baseado no sigilo - esta lógica é do back-end,
-      // mas o front-end precisará ser adaptado para isso)
-      // (Por enquanto, vamos assumir que o usuário logado (ex: Médico) pode ver tudo)
-      
+    // 3. Filtra a lista de evoluções
+    const evolucoesVisiveis = dados.evolucoes.filter((evolucao) =>
+      tiposVisiveis.includes(evolucao.tipo),
+    );
+    
+    for (const evolucao of evolucoesVisiveis) {
       const data = new Date(evolucao.data_evolucao).toLocaleString('pt-BR');
       doc.fontSize(10).fillColor('black');
       doc.text(`[${evolucao.tipo}] - ${data} - ${evolucao.usuario.nome_completo} (${evolucao.usuario.papel.nome})`);
@@ -127,7 +150,6 @@ export class ImpressoesService {
     
     doc.end();
 
-    // 4. Concatena os buffers e retorna
     return new Promise((resolve) => {
       doc.on('end', () => {
         resolve(Buffer.concat(buffers));

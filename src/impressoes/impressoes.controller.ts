@@ -21,23 +21,31 @@ export class ImpressoesController {
   constructor(private readonly impressoesService: ImpressoesService) {}
 
   @Get('paciente/:id/prontuario')
-  @Roles(NomePapel.MEDICO, NomePapel.ADMINISTRADOR, NomePapel.COORDENADOR)
+  @Roles( // <-- CORREÇÃO: Todos os papéis clínicos podem imprimir
+    NomePapel.MEDICO,
+    NomePapel.ADMINISTRADOR,
+    NomePapel.COORDENADOR,
+    NomePapel.ENFERMEIRO,
+    NomePapel.PSICOLOGO,
+    NomePapel.TERAPEUTA,
+    NomePapel.TECNICO
+  )
   async getProntuarioPdf(
     @Param('id', ParseIntPipe) pacienteId: number,
     @Request() req,
-    @Res() res: Response, // 1. Injete o objeto de Resposta
+    @Res() res: Response,
   ) {
-    // 2. Chama o service, que retorna um Buffer (o PDF)
+    // 1. Chama o service, que retorna um Buffer (o PDF)
+    // 2. CORREÇÃO: Passe o 'req.user' (usuarioLogado) para o serviço
     const pdfBuffer = await this.impressoesService.gerarProntuarioPdf(
       pacienteId,
-      req.user,
+      req.user, // <-- PASSE O USUÁRIO LOGADO
     );
 
     // 3. Define os Headers da Resposta
     res.set({
       'Content-Type': 'application/pdf',
       'Content-Length': pdfBuffer.length,
-      // (Opcional) Força o download em vez de abrir no navegador
       'Content-Disposition': `attachment; filename="prontuario_${pacienteId}.pdf"`,
     });
 

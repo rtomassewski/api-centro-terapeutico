@@ -1,7 +1,9 @@
 // src/auth/auth.controller.ts
-import { Controller, Post, Body, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Request, Patch } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
+import { UpdatePerfilDto } from './dto/update-perfil.dto'; // 4. Importe
+import { JwtAuthGuard } from './jwt-auth.guard'; //
 
 @Controller('auth') // Rota: /auth
 export class AuthController {
@@ -17,5 +19,14 @@ export class AuthController {
     
     // Se o usuário for válido, o serviço de login gera o token
     return this.authService.login(usuario);
+  }
+  @Patch('meu-perfil')
+  @UseGuards(JwtAuthGuard) // 6. Proteja! Apenas usuários logados
+  async updatePerfil(
+    @Request() req, // 7. Pega o usuário do token
+    @Body() dto: UpdatePerfilDto, // 8. Pega o formulário
+  ) {
+    const userId = req.user.id; // Pega o ID do usuário logado
+    return this.authService.updatePerfil(userId, dto);
   }
 }
