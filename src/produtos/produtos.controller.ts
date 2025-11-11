@@ -17,15 +17,19 @@ import { UpdateProdutoDto } from './dto/update-produto.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
-import { NomePapel } from '@prisma/client';
+// + 1. Imports Adicionados
+import { LicencaGuard } from '../auth/guards/licenca.guard';
+import { Planos } from '../auth/decorators/planos.decorator';
+import { NomePapel, TipoPlano } from '@prisma/client';
 
 @Controller('produtos')
-@UseGuards(JwtAuthGuard, RolesGuard) // Protege todas as rotas
+@UseGuards(JwtAuthGuard, RolesGuard, LicencaGuard) // + 2. Adicionado LicencaGuard
 export class ProdutosController {
   constructor(private readonly produtosService: ProdutosService) {}
 
   @Post()
-  @Roles(NomePapel.ADMINISTRADOR, NomePapel.ENFERMEIRO) // Apenas estes podem criar
+  @Roles(NomePapel.ADMINISTRADOR, NomePapel.ENFERMEIRO)
+  @Planos(TipoPlano.ENTERPRISE, TipoPlano.TESTE) // + 3. Tranca de Plano
   create(
     @Body() createDto: CreateProdutoDto,
     @Request() req,
@@ -34,12 +38,13 @@ export class ProdutosController {
   }
 
   @Get()
-  @Roles( // Todos os papéis clínicos podem ver o catálogo
+  @Roles(
     NomePapel.ADMINISTRADOR,
     NomePapel.ENFERMEIRO,
     NomePapel.TECNICO,
     NomePapel.MEDICO,
   )
+  @Planos(TipoPlano.ENTERPRISE, TipoPlano.TESTE) // + 3. Tranca de Plano
   findAll(@Request() req) {
     return this.produtosService.findAll(req.user);
   }
@@ -51,12 +56,14 @@ export class ProdutosController {
     NomePapel.TECNICO,
     NomePapel.MEDICO,
   )
+  @Planos(TipoPlano.ENTERPRISE, TipoPlano.TESTE) // + 3. Tranca de Plano
   findOne(@Param('id', ParseIntPipe) id: number, @Request() req) {
     return this.produtosService.findOne(id, req.user);
   }
 
   @Patch(':id')
-  @Roles(NomePapel.ADMINISTRADOR, NomePapel.ENFERMEIRO) // Apenas estes podem editar
+  @Roles(NomePapel.ADMINISTRADOR, NomePapel.ENFERMEIRO)
+  @Planos(TipoPlano.ENTERPRISE, TipoPlano.TESTE) // + 3. Tranca de Plano
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateDto: UpdateProdutoDto,
@@ -66,7 +73,8 @@ export class ProdutosController {
   }
 
   @Delete(':id')
-  @Roles(NomePapel.ADMINISTRADOR) // Apenas ADMINS podem remover
+  @Roles(NomePapel.ADMINISTRADOR)
+  @Planos(TipoPlano.ENTERPRISE, TipoPlano.TESTE) // + 3. Tranca de Plano
   remove(@Param('id', ParseIntPipe) id: number, @Request() req) {
     return this.produtosService.remove(id, req.user);
   }

@@ -7,54 +7,70 @@ import {
   Patch,
   Param,
   Delete,
-  ParseIntPipe,
+  Query,
   UseGuards,
   Request,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { TransacoesFinanceirasService } from './transacoes-financeiras.service';
 import { CreateTransacaoFinanceiraDto } from './dto/create-transacao-financeira.dto';
 import { UpdateTransacaoFinanceiraDto } from './dto/update-transacao-financeira.dto';
-
-// --- Imports de Segurança ---
+import { QueryTransacaoFinanceiraDto } from './dto/query-transacao-financeira.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
-import { Roles } from '../auth/roles.decorator';
-import { NomePapel } from '@prisma/client';
+import { LicencaGuard } from '../auth/guards/licenca.guard';
+import { Planos } from '../auth/decorators/planos.decorator';
+import { NomePapel, TipoPlano } from '@prisma/client';
+import { Roles } from '../auth/decorators/roles.decorator';
 
-// --- SEGURANÇA: Tranca o Controller inteiro ---
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(NomePapel.ADMINISTRADOR)
 @Controller('transacoes-financeiras')
+@UseGuards(JwtAuthGuard, RolesGuard, LicencaGuard) // Guarda de Licença está aqui
 export class TransacoesFinanceirasController {
   constructor(
     private readonly service: TransacoesFinanceirasService,
   ) {}
 
   @Post()
-  create(@Body() dto: CreateTransacaoFinanceiraDto, @Request() req) {
-    return this.service.create(dto, req.user);
+  @Roles(NomePapel.ADMINISTRADOR)
+  @Planos(TipoPlano.PRO, TipoPlano.ENTERPRISE, TipoPlano.TESTE) // <-- CORREÇÃO
+  create(
+    @Body() createDto: CreateTransacaoFinanceiraDto,
+    @Request() req,
+  ) {
+    return this.service.create(createDto, req.user);
   }
 
   @Get()
-  findAll(@Request() req) {
-    return this.service.findAll(req.user);
+  @Roles(NomePapel.ADMINISTRADOR)
+  @Planos(TipoPlano.PRO, TipoPlano.ENTERPRISE, TipoPlano.TESTE) // <-- CORREÇÃO
+  findAll(
+    @Query() query: QueryTransacaoFinanceiraDto,
+    @Request() req,
+  ) {
+    return this.service.findAll(query, req.user);
   }
 
   @Get(':id')
+  @Roles(NomePapel.ADMINISTRADOR, NomePapel.COORDENADOR)
+  @Planos(TipoPlano.PRO, TipoPlano.ENTERPRISE, TipoPlano.TESTE) // <-- CORREÇÃO
   findOne(@Param('id', ParseIntPipe) id: number, @Request() req) {
     return this.service.findOne(id, req.user);
   }
 
   @Patch(':id')
+  @Roles(NomePapel.ADMINISTRADOR)
+  @Planos(TipoPlano.PRO, TipoPlano.ENTERPRISE, TipoPlano.TESTE) // <-- CORREÇÃO
   update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdateTransacaoFinanceiraDto,
+    @Body() updateDto: UpdateTransacaoFinanceiraDto,
     @Request() req,
   ) {
-    return this.service.update(id, dto, req.user);
+    return this.service.update(id, updateDto, req.user);
   }
 
   @Delete(':id')
+  @Roles(NomePapel.ADMINISTRADOR)
+  @Planos(TipoPlano.PRO, TipoPlano.ENTERPRISE, TipoPlano.TESTE) // <-- CORREÇÃO
   remove(@Param('id', ParseIntPipe) id: number, @Request() req) {
     return this.service.remove(id, req.user);
   }

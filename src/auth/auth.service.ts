@@ -5,12 +5,14 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { StatusLicenca, TipoPlano } from '@prisma/client';
 import { UpdatePerfilDto } from './dto/update-perfil.dto';
+import { PrismaService } from '../prisma.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private usuariosService: UsuariosService,
     private jwtService: JwtService,
+    private prisma: PrismaService,
   ) {}
 
   /**

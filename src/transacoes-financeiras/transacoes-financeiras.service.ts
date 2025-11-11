@@ -3,7 +3,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateTransacaoFinanceiraDto } from './dto/create-transacao-financeira.dto';
 import { UpdateTransacaoFinanceiraDto } from './dto/update-transacao-financeira.dto';
 import { PrismaService } from '../prisma.service';
-import { Usuario } from '@prisma/client';
+import { Usuario, Prisma } from '@prisma/client';
+import { QueryTransacaoFinanceiraDto } from './dto/query-transacao-financeira.dto';
 
 @Injectable()
 export class TransacoesFinanceirasService {
@@ -52,18 +53,38 @@ export class TransacoesFinanceirasService {
   /**
    * LISTAR todas as transações (Fluxo de Caixa)
    */
-  findAll(usuarioLogado: Usuario) {
+  async findAll(
+    query: QueryTransacaoFinanceiraDto, // 1. Aceita a Query
+    usuarioLogado: Usuario,
+  ) {
+    // 2. Filtro base de segurança
+    const where: Prisma.TransacaoFinanceiraWhereInput = {
+      clinicaId: usuarioLogado.clinicaId,
+    };
+
+    // 3. Adiciona filtros dinâmicos
+    if (query.pacienteId) {
+      where.pacienteId = query.pacienteId;
+    }
+    if (query.tipo) {
+      where.tipo = query.tipo;
+    }
+    if (query.data_inicio && query.data_fim) {
+      where.data_vencimento = {
+        gte: new Date(query.data_inicio),
+        lte: new Date(query.data_fim),
+      };
+    }
+
+    // 4. Busca no banco
     return this.prisma.transacaoFinanceira.findMany({
-      where: {
-        clinicaId: usuarioLogado.clinicaId, // Segurança: Filtra pela clínica
-      },
-      // Inclui os nomes para o front-end
+      where: where, // Usa os filtros
       include: {
         categoria: { select: { nome: true } },
         paciente: { select: { nome_completo: true } },
       },
       orderBy: {
-        data_vencimento: 'desc', // Mais recentes primeiro
+        data_vencimento: 'desc',
       },
     });
   }
