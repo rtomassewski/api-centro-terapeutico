@@ -18,6 +18,7 @@ const auth_service_1 = require("./auth.service");
 const login_dto_1 = require("./dto/login.dto");
 const update_perfil_dto_1 = require("./dto/update-perfil.dto");
 const jwt_auth_guard_1 = require("./jwt-auth.guard");
+const create_trial_dto_1 = require("./dto/create-trial.dto");
 let AuthController = class AuthController {
     authService;
     constructor(authService) {
@@ -30,6 +31,9 @@ let AuthController = class AuthController {
     async updatePerfil(req, dto) {
         const userId = req.user.id;
         return this.authService.updatePerfil(userId, dto);
+    }
+    async registerTrial(dto) {
+        return this.authService.createTrial(dto);
     }
 };
 exports.AuthController = AuthController;
@@ -49,6 +53,13 @@ __decorate([
     __metadata("design:paramtypes", [Object, update_perfil_dto_1.UpdatePerfilDto]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "updatePerfil", null);
+__decorate([
+    (0, common_1.Post)('register-trial'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [create_trial_dto_1.CreateTrialDto]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "registerTrial", null);
 exports.AuthController = AuthController = __decorate([
     (0, common_1.Controller)('auth'),
     __metadata("design:paramtypes", [auth_service_1.AuthService])

@@ -107,6 +107,18 @@ let PagamentosService = PagamentosService_1 = class PagamentosService {
         }
         return { status: 'recebido' };
     }
+    async superUpdateLicenca(licencaId, dto) {
+        const licenca = await this.prisma.licenca.findUnique({
+            where: { id: licencaId },
+        });
+        if (!licenca) {
+            throw new common_1.NotFoundException('Licença não encontrada.');
+        }
+        return this.prisma.licenca.update({
+            where: { id: licencaId },
+            data: dto,
+        });
+    }
 };
 exports.PagamentosService = PagamentosService;
 exports.PagamentosService = PagamentosService = PagamentosService_1 = __decorate([

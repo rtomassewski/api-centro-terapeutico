@@ -2,6 +2,7 @@ import { UsuariosService } from '../usuarios/usuarios.service';
 import { JwtService } from '@nestjs/jwt';
 import { UpdatePerfilDto } from './dto/update-perfil.dto';
 import { PrismaService } from '../prisma.service';
+import { CreateTrialDto } from './dto/create-trial.dto';
 export declare class AuthService {
     private usuariosService;
     private jwtService;
@@ -26,5 +27,17 @@ export declare class AuthService {
         email: string;
         registro_conselho: string | null;
         assinatura_url: string | null;
+    }>;
+    createTrial(dto: CreateTrialDto): Promise<{
+        access_token: string;
+        usuario: {
+            id: any;
+            nome: any;
+            email: any;
+            papelId: any;
+            clinicaId: any;
+            licenca: any;
+            clinica: any;
+        };
     }>;
 }

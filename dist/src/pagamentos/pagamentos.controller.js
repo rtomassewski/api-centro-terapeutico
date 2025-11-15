@@ -19,6 +19,8 @@ const jwt_auth_guard_1 = require("../auth/jwt-auth.guard");
 const roles_guard_1 = require("../auth/roles.guard");
 const roles_decorator_1 = require("../auth/roles.decorator");
 const client_1 = require("@prisma/client");
+const api_key_guard_1 = require("../auth/api-key.guard");
+const super_update_licenca_dto_1 = require("./dto/super-update-licenca.dto");
 let PagamentosController = class PagamentosController {
     pagamentosService;
     constructor(pagamentosService) {
@@ -29,6 +31,9 @@ let PagamentosController = class PagamentosController {
     }
     async receberWebhook(notificacao) {
         return this.pagamentosService.processarWebhook(notificacao);
+    }
+    async superUpdateLicenca(licencaId, dto) {
+        return this.pagamentosService.superUpdateLicenca(licencaId, dto);
     }
 };
 exports.PagamentosController = PagamentosController;
@@ -49,8 +54,17 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], PagamentosController.prototype, "receberWebhook", null);
+__decorate([
+    (0, common_1.Patch)('licencas/:id'),
+    (0, common_1.UseGuards)(api_key_guard_1.ApiKeyGuard),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, super_update_licenca_dto_1.SuperUpdateLicencaDto]),
+    __metadata("design:returntype", Promise)
+], PagamentosController.prototype, "superUpdateLicenca", null);
 exports.PagamentosController = PagamentosController = __decorate([
-    (0, common_1.Controller)('pagamentos'),
+    (0, common_1.Controller)(),
     __metadata("design:paramtypes", [pagamentos_service_1.PagamentosService])
 ], PagamentosController);
 //# sourceMappingURL=pagamentos.controller.js.map

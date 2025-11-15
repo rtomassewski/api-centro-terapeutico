@@ -47,6 +47,7 @@ const common_1 = require("@nestjs/common");
 const usuarios_service_1 = require("../usuarios/usuarios.service");
 const jwt_1 = require("@nestjs/jwt");
 const bcrypt = __importStar(require("bcrypt"));
+const client_1 = require("@prisma/client");
 const prisma_service_1 = require("../prisma.service");
 let AuthService = class AuthService {
     usuariosService;
@@ -108,6 +109,65 @@ let AuthService = class AuthService {
                 assinatura_url: true,
             },
         });
+    }
+    async createTrial(dto) {
+        const emailExists = await this.prisma.usuario.findUnique({
+            where: { email: dto.email_admin },
+        });
+        if (emailExists) {
+            throw new common_1.ConflictException('Este e-mail já está em uso.');
+        }
+        const cnpjExists = await this.prisma.clinica.findUnique({
+            where: { cnpj: dto.cnpj },
+        });
+        if (cnpjExists) {
+            throw new common_1.ConflictException('Este CNPJ já está registado.');
+        }
+        const saltRounds = 10;
+        const senhaHash = await bcrypt.hash(dto.senha_admin, saltRounds);
+        const dataExpiracaoTeste = new Date();
+        dataExpiracaoTeste.setDate(dataExpiracaoTeste.getDate() + 30);
+        try {
+            const [novaClinica, novoUsuario] = await this.prisma.$transaction(async (tx) => {
+                const clinica = await tx.clinica.create({
+                    data: {
+                        nome_fantasia: dto.nome_fantasia,
+                        razao_social: `${dto.nome_fantasia} LTDA`,
+                        cnpj: dto.cnpj,
+                        ativa: true,
+                    },
+                });
+                await tx.licenca.create({
+                    data: {
+                        plano: client_1.TipoPlano.TESTE,
+                        status: client_1.StatusLicenca.TESTE,
+                        data_expiracao: dataExpiracaoTeste,
+                        clinicaId: clinica.id,
+                    },
+                });
+                const usuario = await tx.usuario.create({
+                    data: {
+                        nome_completo: dto.nome_admin,
+                        email: dto.email_admin,
+                        senha_hash: senhaHash,
+                        ativo: true,
+                        papelId: 1,
+                        clinicaId: clinica.id,
+                    },
+                });
+                return [clinica, usuario];
+            });
+            const usuarioCompleto = await this.usuariosService.findByEmail(novoUsuario.email);
+            return this.login(usuarioCompleto);
+        }
+        catch (error) {
+            if (error instanceof client_1.Prisma.PrismaClientKnownRequestError) {
+                if (error.code === 'P2002') {
+                    throw new common_1.ConflictException('E-mail ou CNPJ já registado.');
+                }
+            }
+            throw new common_1.InternalServerErrorException('Erro ao criar a conta de teste.');
+        }
     }
 };
 exports.AuthService = AuthService;

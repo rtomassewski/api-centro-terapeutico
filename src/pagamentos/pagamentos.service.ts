@@ -1,5 +1,5 @@
 // src/pagamentos/pagamentos.service.ts
-import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma.service';
 import { Usuario } from '@prisma/client';

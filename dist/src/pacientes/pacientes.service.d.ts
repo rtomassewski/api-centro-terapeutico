@@ -13,20 +13,20 @@ export declare class PacientesService {
         clinicaId: number;
         createdAt: Date;
         updatedAt: Date;
-        status: import("@prisma/client").$Enums.StatusPaciente;
         nome_social: string | null;
         data_nascimento: Date;
         cpf: string;
         nome_responsavel: string;
         telefone_responsavel: string;
+        status: import("@prisma/client").$Enums.StatusPaciente;
         data_admissao: Date;
     }>;
     findAll(query: QueryPacienteDto, usuarioLogado: Usuario): Promise<{
         id: number;
         nome_completo: string;
-        status: import("@prisma/client").$Enums.StatusPaciente;
         nome_social: string | null;
         data_nascimento: Date;
+        status: import("@prisma/client").$Enums.StatusPaciente;
     }[]>;
     findOne(pacienteId: number, usuarioLogado: Usuario): Promise<{
         id: number;
@@ -34,12 +34,12 @@ export declare class PacientesService {
         clinicaId: number;
         createdAt: Date;
         updatedAt: Date;
-        status: import("@prisma/client").$Enums.StatusPaciente;
         nome_social: string | null;
         data_nascimento: Date;
         cpf: string;
         nome_responsavel: string;
         telefone_responsavel: string;
+        status: import("@prisma/client").$Enums.StatusPaciente;
         data_admissao: Date;
     }>;
     update(pacienteId: number, dto: UpdatePacienteDto, usuarioLogado: Usuario): Promise<{
@@ -48,12 +48,12 @@ export declare class PacientesService {
         clinicaId: number;
         createdAt: Date;
         updatedAt: Date;
-        status: import("@prisma/client").$Enums.StatusPaciente;
         nome_social: string | null;
         data_nascimento: Date;
         cpf: string;
         nome_responsavel: string;
         telefone_responsavel: string;
+        status: import("@prisma/client").$Enums.StatusPaciente;
         data_admissao: Date;
     }>;
     checkIn(pacienteId: number, dto: CheckInPacienteDto, usuarioLogado: Usuario): Promise<{

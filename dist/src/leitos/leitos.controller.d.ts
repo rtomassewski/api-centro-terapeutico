@@ -36,12 +36,12 @@ export declare class LeitosController {
             clinicaId: number;
             createdAt: Date;
             updatedAt: Date;
-            status: import("@prisma/client").$Enums.StatusPaciente;
             nome_social: string | null;
             data_nascimento: Date;
             cpf: string;
             nome_responsavel: string;
             telefone_responsavel: string;
+            status: import("@prisma/client").$Enums.StatusPaciente;
             data_admissao: Date;
         } | null;
         quarto: {
