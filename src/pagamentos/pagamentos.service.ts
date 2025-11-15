@@ -5,6 +5,7 @@ import { PrismaService } from '../prisma.service';
 import { Usuario } from '@prisma/client';
 import { StatusLicenca, TipoPlano } from '@prisma/client';
 import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
+import { SuperUpdateLicencaDto } from './dto/super-update-licenca.dto';
 
 @Injectable()
 export class PagamentosService {
@@ -144,5 +145,24 @@ export class PagamentosService {
     }
     // Retornamos 200 OK para o Mercado Pago parar de enviar
     return { status: 'recebido' };
+  }
+  async superUpdateLicenca(
+    licencaId: number,
+    dto: SuperUpdateLicencaDto,
+  ) {
+    // Verifica se a licença existe
+    const licenca = await this.prisma.licenca.findUnique({
+      where: { id: licencaId },
+    });
+
+    if (!licenca) {
+      throw new NotFoundException('Licença não encontrada.');
+    }
+
+    // Atualiza
+    return this.prisma.licenca.update({
+      where: { id: licencaId },
+      data: dto,
+    });
   }
 }
