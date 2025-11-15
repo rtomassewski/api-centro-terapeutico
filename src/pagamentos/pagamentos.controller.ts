@@ -1,5 +1,15 @@
 // src/pagamentos/pagamentos.controller.ts
-import { Controller, Post, Body, UseGuards, Request, HttpCode,Patch, Param, ParseIntPipe, } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  Request,
+  HttpCode,
+  Patch,
+  Param,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { PagamentosService } from './pagamentos.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -7,8 +17,13 @@ import { Roles } from '../auth/roles.decorator';
 import { NomePapel } from '@prisma/client';
 import { ApiKeyGuard } from '../auth/api-key.guard';
 import { SuperUpdateLicencaDto } from './dto/super-update-licenca.dto';
+// (Importe o JwtAuthGuard se estiver em falta)
+// import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+// (Importe o Request se estiver em falta)
+// import { Request } from '@nestjs/common';
 
-@Controller()
+// --- CORREÇÃO 1: Adicione o prefixo de volta ---
+@Controller('pagamentos')
 export class PagamentosController {
   constructor(private readonly pagamentosService: PagamentosService) {}
 
@@ -16,25 +31,24 @@ export class PagamentosController {
    * Endpoint para um admin da clínica iniciar um checkout
    */
   @Post('checkout')
-  // Protegido por Login
-  @UseGuards(JwtAuthGuard, RolesGuard) 
-  // Protegido por Papel (ex: só o Admin da clínica pode pagar)
-  @Roles(NomePapel.ADMINISTRADOR) 
-  async createCheckout(
-    @Request() req,
-  ) {
-    // req.user contém o usuário logado (incluindo clinicaId)
-    return this.pagamentosService.criarCheckout(req.user);
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(NomePapel.ADMINISTRADOR)
+  async createCheckout(@Request() req) {
+    // (O seu código 'createCheckout' existente)
+    // (No seu código colado era 'criarCheckout', certifique-se de que o nome do método está correto)
+    return this.pagamentosService.criarCheckout(req.user); 
   }
-@Post('webhook')
-  @HttpCode(200) // 2. Responda 200 OK (e não 201 Created)
+
+  @Post('webhook')
+  @HttpCode(200)
   async receberWebhook(@Body() notificacao: any) {
-    // 3. Este endpoint é PÚBLICO (sem guardas)
-    // O Mercado Pago que o chama.
+    // (O seu código 'receberWebhook' existente)
     return this.pagamentosService.processarWebhook(notificacao);
   }
-  @Patch('licencas/:id') // A Rota que faltava!
-  @UseGuards(ApiKeyGuard) // 7. Protegido pela sua chave de Super-Admin
+
+  // --- CORREÇÃO 2: O endpoint de licença AGORA VIVE DENTRO DE /pagamentos ---
+  @Patch('licencas/:id') // O URL real será: /pagamentos/licencas/:id
+  @UseGuards(ApiKeyGuard) // Protegido pela sua chave de Super-Admin
   async superUpdateLicenca(
     @Param('id', ParseIntPipe) licencaId: number,
     @Body() dto: SuperUpdateLicencaDto,
