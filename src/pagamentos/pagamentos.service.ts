@@ -150,19 +150,33 @@ export class PagamentosService {
     licencaId: number,
     dto: SuperUpdateLicencaDto,
   ) {
-    // Verifica se a licença existe
     const licenca = await this.prisma.licenca.findUnique({
       where: { id: licencaId },
     });
-
     if (!licenca) {
       throw new NotFoundException('Licença não encontrada.');
     }
 
+    // --- CORREÇÃO AQUI ---
+    // Mapeia os dados e converte a data
+    const dadosParaAtualizar: any = {};
+    
+    if (dto.plano) {
+      dadosParaAtualizar.plano = dto.plano;
+    }
+    if (dto.status) {
+      dadosParaAtualizar.status = dto.status;
+    }
+    if (dto.data_expiracao) {
+      // Converte a string ISO (do JSON) para um objeto Date (do Prisma)
+      dadosParaAtualizar.data_expiracao = new Date(dto.data_expiracao);
+    }
+    // --- FIM DA CORREÇÃO ---
+
     // Atualiza
     return this.prisma.licenca.update({
       where: { id: licencaId },
-      data: dto,
+      data: dadosParaAtualizar, // Usa os dados mapeados
     });
   }
 }

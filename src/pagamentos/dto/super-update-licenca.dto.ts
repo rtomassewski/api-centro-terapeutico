@@ -1,5 +1,5 @@
 // src/pagamentos/dto/super-update-licenca.dto.ts
-import { IsEnum, IsOptional } from 'class-validator';
+import { IsEnum, IsOptional, IsDateString } from 'class-validator';
 import { StatusLicenca, TipoPlano } from '@prisma/client';
 
 export class SuperUpdateLicencaDto {
@@ -11,6 +11,10 @@ export class SuperUpdateLicencaDto {
   @IsEnum(StatusLicenca)
   @IsOptional()
   status?: StatusLicenca;
+
+  @IsDateString()
+  @IsOptional()
+  data_expiracao?: string;
   
   // (Poderíamos adicionar 'data_expiracao' aqui também, mas vamos manter simples por agora)
 }
