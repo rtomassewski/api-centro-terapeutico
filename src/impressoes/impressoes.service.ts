@@ -57,7 +57,7 @@ export class ImpressoesService {
       const response = await axios.get(url, { responseType: 'arraybuffer' });
       return Buffer.from(response.data as ArrayBuffer);
     } catch (error) {
-      console.error('Erro ao buscar logo (este erro é normal se o URL for inválido):', error.message);
+      console.error('Erro ao buscar logo (este erro é normal se o URL for inválido ou Google Drive):', error.message);
       return null;
     }
   }
@@ -100,6 +100,8 @@ export class ImpressoesService {
       } catch (e) {
         // (Se o logoBuffer estiver corrompido, desenha sem ele)
         doc.fontSize(18).text(clinica.nome_fantasia || '', headerXSemLogo, headerY + 10);
+        doc.fontSize(10).text(clinica.endereco || '', headerXSemLogo, headerY + 35);
+        doc.fontSize(10).text(clinica.telefone || '', headerXSemLogo, headerY + 50);
       }
     } else {
       // Se não houver logo, desenha o texto na borda
