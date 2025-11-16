@@ -23,5 +23,9 @@ export class CreateUsuarioDto {
 
   @IsInt()
   clinicaId: number;
+  
+  @IsString()
+  @IsOptional()
+  registro_conselho?: string;
 
 }

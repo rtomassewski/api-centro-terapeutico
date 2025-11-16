@@ -49,6 +49,7 @@ export class UsuariosService {
           papelId: dto.papelId,
           ativo: true,
           clinicaId: dto.clinicaId, // 2. Pegue do DTO
+          
         },
         select: {
           id: true,

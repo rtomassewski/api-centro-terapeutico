@@ -171,10 +171,38 @@ export class ImpressoesService {
       doc.moveDown(0.5);
     }
     
-    // (Adicionar Prescrições, Sinais Vitais, Notas de Comportamento...)
+    doc.fontSize(14).text('Prescrições Ativas', { underline: true });
+    doc.moveDown(0.5);
+
+    const prescricoesAtivas = dados.prescricoes.filter((p) => p.ativa);
+
+    if (prescricoesAtivas.length === 0) {
+      doc.fontSize(10).fillColor('gray').text('Nenhuma prescrição ativa encontrada.');
+      doc.moveDown(1);
+    } else {
+      for (const prescricao of prescricoesAtivas) {
+        doc.fontSize(11).fillColor('black').text(prescricao.produto.nome, { continued: true });
+        if(prescricao.dosagem) {
+          doc.fontSize(11).text(` (${prescricao.dosagem})`);
+        }
+        
+        doc.fontSize(10).fillColor('gray').text(`Qtd: ${prescricao.quantidade_por_dose} | Posologia: ${prescricao.posologia}`);
+        
+        // Imprime o Médico e o CRM/Registro
+        const medico = prescricao.usuario;
+        const registro = medico.registro_conselho ? ` (${medico.registro_conselho})` : '';
+        doc.fontSize(9).fillColor('darkgray').text(`Prescrito por: ${medico.nome_completo}${registro}`);
+        
+        doc.moveDown(0.5);
+      }
+    }
+    doc.moveDown(1);
+    
+    // (Poderíamos adicionar Sinais Vitais aqui com a mesma lógica)
+    
+    // --- FIM DA ADIÇÃO ---
     
     // --- Fim do Desenho do PDF ---
-    
     doc.end();
 
     return new Promise((resolve) => {
