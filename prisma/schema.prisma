@@ -178,38 +178,34 @@ model Usuario {
 model Paciente {
   id                 Int            @id @default(autoincrement())
   nome_completo      String
-
-  // --- CAMPOS ANTIGOS QUE FALTAVAM ---
   nome_social        String?
   data_nascimento    DateTime
-  cpf                String         @unique
+  
+  cpf                String // Corrigido (sem @unique aqui)
+  
   nome_responsavel   String
   telefone_responsavel String
   data_admissao      DateTime       @default(now())
-  // --- FIM DOS CAMPOS ANTIGOS ---
-
   status             StatusPaciente @default(ATIVO)
 
-  // --- NOVA RELAÇÃO (MULTI-TENANCY) ---
+  // Relações
   clinica            Clinica        @relation(fields: [clinicaId], references: [id])
   clinicaId          Int
-  // --- FIM DA NOVA RELAÇÃO ---
-
+  leito              Leito?
+  historicos_medicos HistoricoMedico[]
   evolucoes          Evolucao[]
   prescricoes        Prescricao[]
-
-  transacoes_financeiras TransacaoFinanceira[]
-  administracoes_medicamentos AdministracaoMedicamento[]
-  sinais_vitais SinalVital[]
-
-  agendamentos Agendamento[]
+  sinais_vitais      SinalVital[]
+  agendamentos       Agendamento[]
   notas_comportamento NotaComportamento[]
+  transacoes_financeiras TransacaoFinanceira[]
 
-  leito     Leito?
-  historicos_medicos HistoricoMedico[]
+  // --- A LINHA QUE FALTAVA ---
+  administracoes_medicamentos AdministracaoMedicamento[]
+  // --- FIM DA CORREÇÃO ---
 
-  createdAt          DateTime       @default(now())
-  updatedAt          DateTime       @updatedAt
+  // O índice único (da última etapa)
+  @@unique([cpf, clinicaId])
 }
 
 model Evolucao {
