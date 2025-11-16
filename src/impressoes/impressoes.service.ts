@@ -57,7 +57,7 @@ export class ImpressoesService {
       const response = await axios.get(url, { responseType: 'arraybuffer' });
       return Buffer.from(response.data as ArrayBuffer);
     } catch (error) {
-      console.error('Erro ao buscar logo:', error.message);
+      console.error('Erro ao buscar logo (este erro é normal se o URL for inválido):', error.message);
       return null;
     }
   }
@@ -67,20 +67,18 @@ export class ImpressoesService {
    */
   async gerarProntuarioPdf(
     pacienteId: number,
-    usuarioLogado: any, // 1. Mude de 'Usuario' para 'any' (para aceder a .papel)
+    usuarioLogado: any,
   ): Promise<Buffer> {
-    // 2. Busca todos os dados (incluindo os sigilosos)
+    
     const dados = await this.getDadosCompletos(
       pacienteId,
       usuarioLogado.clinicaId,
     );
     const paciente = dados;
     const clinica = dados.clinica;
-    console.log("DADOS DA CLINICA PARA O PDF:", clinica);
 
-    // --- CORREÇÃO DE TESTE ---
-    // const logoBuffer = await this.getLogoBuffer(clinica.logo_url);
-    const logoBuffer = null; // Force o logo a ser nulo
+    // --- CORREÇÃO: O LOGO ESTÁ ATIVADO NOVAMENTE ---
+    const logoBuffer = await this.getLogoBuffer(clinica.logo_url);
     
     const doc = new PDFKit({ size: 'A4', margin: 50 });
     const buffers: Buffer[] = [];
@@ -88,13 +86,42 @@ export class ImpressoesService {
     
     // --- Início do Desenho do PDF ---
 
-    // (Cabeçalho, Logo, Dados do Paciente - não mudam)
-    // ...
+    // --- CORREÇÃO: O CÓDIGO DE DESENHO DO CABEÇALHO FOI RESTAURADO ---
+    const headerY = 40;
+    const headerXLogo = 160; // Posição do texto se o logo existir
+    const headerXSemLogo = 50; // Posição do texto se não houver logo
     
+    if (logoBuffer) {
+      try {
+        doc.image(logoBuffer, 50, headerY, { width: 100 });
+        doc.fontSize(18).text(clinica.nome_fantasia || '', headerXLogo, headerY + 10);
+        doc.fontSize(10).text(clinica.endereco || '', headerXLogo, headerY + 35);
+        doc.fontSize(10).text(clinica.telefone || '', headerXLogo, headerY + 50);
+      } catch (e) {
+        // (Se o logoBuffer estiver corrompido, desenha sem ele)
+        doc.fontSize(18).text(clinica.nome_fantasia || '', headerXSemLogo, headerY + 10);
+      }
+    } else {
+      // Se não houver logo, desenha o texto na borda
+      doc.fontSize(18).text(clinica.nome_fantasia || '', headerXSemLogo, headerY + 10);
+      doc.fontSize(10).text(clinica.endereco || '', headerXSemLogo, headerY + 35);
+      doc.fontSize(10).text(clinica.telefone || '', headerXSemLogo, headerY + 50);
+    }
+    
+    doc.moveDown(4); // Pula espaço após o cabeçalho
+    doc.fontSize(16).text(`Prontuário do Paciente`, { align: 'center' });
+    doc.moveDown(1);
+    
+    // Dados do Paciente
+    doc.fontSize(12).text(`Paciente: ${paciente.nome_completo}`, { continued: true });
+    doc.text(` (ID: ${paciente.id})`);
+    doc.text(`CPF: ${paciente.cpf}`);
+    doc.text(`Data Nasc.: ${new Date(paciente.data_nascimento).toLocaleDateString('pt-BR')}`);
     doc.moveDown(2);
+    // --- FIM DA CORREÇÃO DO CABEÇALHO ---
     
-    // --- LÓGICA DE SIGILO (A CORREÇÃO) ---
-    // (A mesma lógica do EvolucoesService)
+    
+    // --- LÓGICA DE SIGILO (Já está correta) ---
     const papelUsuario = usuarioLogado.papel.nome;
     const tiposVisiveis: TipoEvolucao[] = [TipoEvolucao.GERAL];
     if (papelUsuario === NomePapel.PSICOLOGO) {
@@ -110,10 +137,9 @@ export class ImpressoesService {
     ) {
       tiposVisiveis.push(TipoEvolucao.PSICOLOGICA, TipoEvolucao.TERAPEUTICA);
     }
-    // --- FIM DA LÓGICA ---
 
     // (Histórico Médico - Filtrado)
-    doc.fontSize(16).text('Histórico Médico', { underline: true });
+    doc.fontSize(14).text('Histórico Médico', { underline: true });
     doc.moveDown(0.5);
     const historicosVisiveis = dados.historicos_medicos.filter((h) => 
       tiposVisiveis.includes(h.tipo)
@@ -123,15 +149,14 @@ export class ImpressoesService {
       doc.fontSize(10).fillColor('gray').text(`(Por: ${h.usuario_preencheu.nome_completo})`);
       if(h.alergias) doc.fontSize(10).fillColor('black').text(`Alergias: ${h.alergias}`);
       if(h.condicoes_previas) doc.fontSize(10).fillColor('black').text(`Condições: ${h.condicoes_previas}`);
-      // (Adicionar outros campos do histórico se desejar)
+      // (Adicionar outros campos...)
       doc.moveDown(0.5);
     }
     doc.moveDown(1);
     
     // (Evoluções - Filtrado)
-    doc.fontSize(16).text('Evoluções', { underline: true });
+    doc.fontSize(14).text('Evoluções', { underline: true });
     doc.moveDown(0.5);
-    // 3. Filtra a lista de evoluções
     const evolucoesVisiveis = dados.evolucoes.filter((evolucao) =>
       tiposVisiveis.includes(evolucao.tipo),
     );
@@ -144,7 +169,7 @@ export class ImpressoesService {
       doc.moveDown(0.5);
     }
     
-    // (Adicionar Prescrições, Sinais Vitais, etc. - o padrão é o mesmo)
+    // (Adicionar Prescrições, Sinais Vitais, Notas de Comportamento...)
     
     // --- Fim do Desenho do PDF ---
     
