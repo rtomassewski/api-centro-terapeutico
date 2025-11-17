@@ -114,9 +114,19 @@ let PagamentosService = PagamentosService_1 = class PagamentosService {
         if (!licenca) {
             throw new common_1.NotFoundException('Licença não encontrada.');
         }
+        const dadosParaAtualizar = {};
+        if (dto.plano) {
+            dadosParaAtualizar.plano = dto.plano;
+        }
+        if (dto.status) {
+            dadosParaAtualizar.status = dto.status;
+        }
+        if (dto.data_expiracao) {
+            dadosParaAtualizar.data_expiracao = new Date(dto.data_expiracao);
+        }
         return this.prisma.licenca.update({
             where: { id: licencaId },
-            data: dto,
+            data: dadosParaAtualizar,
         });
     }
 };

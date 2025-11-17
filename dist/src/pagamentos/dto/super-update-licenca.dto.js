@@ -15,6 +15,7 @@ const client_1 = require("@prisma/client");
 class SuperUpdateLicencaDto {
     plano;
     status;
+    data_expiracao;
 }
 exports.SuperUpdateLicencaDto = SuperUpdateLicencaDto;
 __decorate([
@@ -27,4 +28,9 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], SuperUpdateLicencaDto.prototype, "status", void 0);
+__decorate([
+    (0, class_validator_1.IsDateString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], SuperUpdateLicencaDto.prototype, "data_expiracao", void 0);
 //# sourceMappingURL=super-update-licenca.dto.js.map

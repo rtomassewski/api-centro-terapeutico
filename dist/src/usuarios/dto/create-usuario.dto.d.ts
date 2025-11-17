@@ -3,6 +3,6 @@ export declare class CreateUsuarioDto {
     email: string;
     senha: string;
     papelId: number;
-    registro_conselho?: string;
     clinicaId: number;
+    registro_conselho?: string;
 }

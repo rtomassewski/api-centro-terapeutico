@@ -64,7 +64,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], PagamentosController.prototype, "superUpdateLicenca", null);
 exports.PagamentosController = PagamentosController = __decorate([
-    (0, common_1.Controller)(),
+    (0, common_1.Controller)('pagamentos'),
     __metadata("design:paramtypes", [pagamentos_service_1.PagamentosService])
 ], PagamentosController);
 //# sourceMappingURL=pagamentos.controller.js.map

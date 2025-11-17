@@ -9,10 +9,10 @@ export declare class ClinicasService {
         id: number;
         createdAt: Date;
         updatedAt: Date;
-        ativa: boolean;
+        razao_social: string;
         nome_fantasia: string;
         cnpj: string;
-        razao_social: string;
+        ativa: boolean;
         logo_url: string | null;
         endereco: string | null;
         telefone: string | null;
@@ -21,10 +21,10 @@ export declare class ClinicasService {
         id: number;
         createdAt: Date;
         updatedAt: Date;
-        ativa: boolean;
+        razao_social: string;
         nome_fantasia: string;
         cnpj: string;
-        razao_social: string;
+        ativa: boolean;
         logo_url: string | null;
         endereco: string | null;
         telefone: string | null;

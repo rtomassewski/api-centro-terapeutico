@@ -12,20 +12,15 @@ export class CreateUsuarioDto {
 
   @IsString()
   @MinLength(6)
-  senha: string; // Recebemos a senha pura, vamos criptografar no Service
+  senha: string; 
 
   @IsInt()
-  papelId: number; // O ID do Papel (ex: 2 para MEDICO)
-
-  @IsString()
-  @IsOptional() // O '?' torna o campo opcional
-  registro_conselho?: string; // ex: "CRM-SP 123456"
+  papelId: number; 
 
   @IsInt()
   clinicaId: number;
   
   @IsString()
   @IsOptional()
-  registro_conselho?: string;
-
+  registro_conselho?: string; 
 }

@@ -43,8 +43,8 @@ export declare class UsuariosController {
         nome_completo: string;
         email: string;
         papelId: number;
-        registro_conselho: string | null;
         clinicaId: number;
+        registro_conselho: string | null;
         ativo: boolean;
         assinatura_url: string | null;
         senha_hash: string;

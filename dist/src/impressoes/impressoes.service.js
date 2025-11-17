@@ -60,11 +60,16 @@ let ImpressoesService = class ImpressoesService {
         if (!url)
             return null;
         try {
-            const response = await axios_1.default.get(url, { responseType: 'arraybuffer' });
+            const response = await axios_1.default.get(url, {
+                responseType: 'arraybuffer',
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'
+                }
+            });
             return Buffer.from(response.data);
         }
         catch (error) {
-            console.error('Erro ao buscar logo:', error.message);
+            console.error('Erro ao buscar logo (este erro é normal se o URL for inválido/Google Drive):', error.message);
             return null;
         }
     }
@@ -72,11 +77,38 @@ let ImpressoesService = class ImpressoesService {
         const dados = await this.getDadosCompletos(pacienteId, usuarioLogado.clinicaId);
         const paciente = dados;
         const clinica = dados.clinica;
-        console.log("DADOS DA CLINICA PARA O PDF:", clinica);
-        const logoBuffer = null;
+        const logoBuffer = await this.getLogoBuffer(clinica.logo_url);
         const doc = new PDFKit({ size: 'A4', margin: 50 });
         const buffers = [];
         doc.on('data', buffers.push.bind(buffers));
+        const headerY = 40;
+        const headerXLogo = 160;
+        const headerXSemLogo = 50;
+        if (logoBuffer) {
+            try {
+                doc.image(logoBuffer, 50, headerY, { width: 100 });
+                doc.fontSize(18).text(clinica.nome_fantasia || '', headerXLogo, headerY + 10);
+                doc.fontSize(10).text(clinica.endereco || '', headerXLogo, headerY + 35);
+                doc.fontSize(10).text(clinica.telefone || '', headerXLogo, headerY + 50);
+            }
+            catch (e) {
+                doc.fontSize(18).text(clinica.nome_fantasia || '', headerXSemLogo, headerY + 10);
+                doc.fontSize(10).text(clinica.endereco || '', headerXSemLogo, headerY + 35);
+                doc.fontSize(10).text(clinica.telefone || '', headerXSemLogo, headerY + 50);
+            }
+        }
+        else {
+            doc.fontSize(18).text(clinica.nome_fantasia || '', headerXSemLogo, headerY + 10);
+            doc.fontSize(10).text(clinica.endereco || '', headerXSemLogo, headerY + 35);
+            doc.fontSize(10).text(clinica.telefone || '', headerXSemLogo, headerY + 50);
+        }
+        doc.moveDown(4);
+        doc.fontSize(16).text(`Prontuário do Paciente`, { align: 'center' });
+        doc.moveDown(1);
+        doc.fontSize(12).text(`Paciente: ${paciente.nome_completo}`, { continued: true });
+        doc.text(` (ID: ${paciente.id})`);
+        doc.text(`CPF: ${paciente.cpf}`);
+        doc.text(`Data Nasc.: ${new Date(paciente.data_nascimento).toLocaleDateString('pt-BR')}`);
         doc.moveDown(2);
         const papelUsuario = usuarioLogado.papel.nome;
         const tiposVisiveis = [client_1.TipoEvolucao.GERAL];
@@ -91,7 +123,7 @@ let ImpressoesService = class ImpressoesService {
             papelUsuario === client_1.NomePapel.MEDICO) {
             tiposVisiveis.push(client_1.TipoEvolucao.PSICOLOGICA, client_1.TipoEvolucao.TERAPEUTICA);
         }
-        doc.fontSize(16).text('Histórico Médico', { underline: true });
+        doc.fontSize(14).text('Histórico Médico', { underline: true });
         doc.moveDown(0.5);
         const historicosVisiveis = dados.historicos_medicos.filter((h) => tiposVisiveis.includes(h.tipo));
         for (const h of historicosVisiveis) {
@@ -104,7 +136,7 @@ let ImpressoesService = class ImpressoesService {
             doc.moveDown(0.5);
         }
         doc.moveDown(1);
-        doc.fontSize(16).text('Evoluções', { underline: true });
+        doc.fontSize(14).text('Evoluções', { underline: true });
         doc.moveDown(0.5);
         const evolucoesVisiveis = dados.evolucoes.filter((evolucao) => tiposVisiveis.includes(evolucao.tipo));
         for (const evolucao of evolucoesVisiveis) {
@@ -114,6 +146,27 @@ let ImpressoesService = class ImpressoesService {
             doc.fontSize(10).fillColor('gray').text(evolucao.descricao);
             doc.moveDown(0.5);
         }
+        doc.moveDown(1);
+        doc.fontSize(14).text('Prescrições Ativas', { underline: true });
+        doc.moveDown(0.5);
+        const prescricoesAtivas = dados.prescricoes.filter((p) => p.ativa);
+        if (prescricoesAtivas.length === 0) {
+            doc.fontSize(10).fillColor('gray').text('Nenhuma prescrição ativa encontrada.');
+        }
+        else {
+            for (const prescricao of prescricoesAtivas) {
+                doc.fontSize(11).fillColor('black').text(prescricao.produto.nome, { continued: true });
+                if (prescricao.dosagem) {
+                    doc.fontSize(11).text(` (${prescricao.dosagem})`);
+                }
+                doc.fontSize(10).fillColor('gray').text(`Qtd: ${prescricao.quantidade_por_dose} | Posologia: ${prescricao.posologia}`);
+                const medico = prescricao.usuario;
+                const registro = medico.registro_conselho ? ` (${medico.registro_conselho})` : '';
+                doc.fontSize(9).fillColor('darkgray').text(`Prescrito por: ${medico.nome_completo}${registro}`);
+                doc.moveDown(0.5);
+            }
+        }
+        doc.moveDown(1);
         doc.end();
         return new Promise((resolve) => {
             doc.on('end', () => {

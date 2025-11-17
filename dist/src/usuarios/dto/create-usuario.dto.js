@@ -16,8 +16,8 @@ class CreateUsuarioDto {
     email;
     senha;
     papelId;
-    registro_conselho;
     clinicaId;
+    registro_conselho;
 }
 exports.CreateUsuarioDto = CreateUsuarioDto;
 __decorate([
@@ -39,12 +39,12 @@ __decorate([
     __metadata("design:type", Number)
 ], CreateUsuarioDto.prototype, "papelId", void 0);
 __decorate([
+    (0, class_validator_1.IsInt)(),
+    __metadata("design:type", Number)
+], CreateUsuarioDto.prototype, "clinicaId", void 0);
+__decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], CreateUsuarioDto.prototype, "registro_conselho", void 0);
-__decorate([
-    (0, class_validator_1.IsInt)(),
-    __metadata("design:type", Number)
-], CreateUsuarioDto.prototype, "clinicaId", void 0);
 //# sourceMappingURL=create-usuario.dto.js.map
