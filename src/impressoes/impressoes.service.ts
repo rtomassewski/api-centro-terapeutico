@@ -11,7 +11,6 @@ export class ImpressoesService {
 
   /**
    * Helper para buscar todos os dados de um paciente
-   * (Esta é uma consulta ENORME)
    */
   private async getDadosCompletos(pacienteId: number, clinicaId: number) {
     const paciente = await this.prisma.paciente.findFirst({
@@ -54,10 +53,16 @@ export class ImpressoesService {
   private async getLogoBuffer(url: string | null): Promise<Buffer | null> {
     if (!url) return null;
     try {
-      const response = await axios.get(url, { responseType: 'arraybuffer' });
+      const response = await axios.get(url, { 
+        responseType: 'arraybuffer',
+        // (Adiciona um "disfarce" de navegador para evitar ser bloqueado)
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'
+        }
+      });
       return Buffer.from(response.data as ArrayBuffer);
     } catch (error) {
-      console.error('Erro ao buscar logo (este erro é normal se o URL for inválido ou Google Drive):', error.message);
+      console.error('Erro ao buscar logo (este erro é normal se o URL for inválido/Google Drive):', error.message);
       return null;
     }
   }
@@ -170,39 +175,33 @@ export class ImpressoesService {
       doc.fontSize(10).fillColor('gray').text(evolucao.descricao);
       doc.moveDown(0.5);
     }
+    doc.moveDown(1); // (Adicionado espaço)
     
+    // (Prescrições - Adicionado no passo anterior)
     doc.fontSize(14).text('Prescrições Ativas', { underline: true });
     doc.moveDown(0.5);
-
     const prescricoesAtivas = dados.prescricoes.filter((p) => p.ativa);
-
     if (prescricoesAtivas.length === 0) {
       doc.fontSize(10).fillColor('gray').text('Nenhuma prescrição ativa encontrada.');
-      doc.moveDown(1);
     } else {
       for (const prescricao of prescricoesAtivas) {
         doc.fontSize(11).fillColor('black').text(prescricao.produto.nome, { continued: true });
         if(prescricao.dosagem) {
           doc.fontSize(11).text(` (${prescricao.dosagem})`);
         }
-        
         doc.fontSize(10).fillColor('gray').text(`Qtd: ${prescricao.quantidade_por_dose} | Posologia: ${prescricao.posologia}`);
-        
-        // Imprime o Médico e o CRM/Registro
         const medico = prescricao.usuario;
         const registro = medico.registro_conselho ? ` (${medico.registro_conselho})` : '';
         doc.fontSize(9).fillColor('darkgray').text(`Prescrito por: ${medico.nome_completo}${registro}`);
-        
         doc.moveDown(0.5);
       }
     }
     doc.moveDown(1);
     
-    // (Poderíamos adicionar Sinais Vitais aqui com a mesma lógica)
-    
-    // --- FIM DA ADIÇÃO ---
+    // (Adicionar Sinais Vitais, Notas de Comportamento...)
     
     // --- Fim do Desenho do PDF ---
+    
     doc.end();
 
     return new Promise((resolve) => {
