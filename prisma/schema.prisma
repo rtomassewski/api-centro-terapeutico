@@ -10,6 +10,15 @@ datasource db {
 }
 
 // --- ENUMs (Tipos pré-definidos) ---
+
+enum StatusAtendimento {
+  AGUARDANDO
+  ATENDIDO
+  CANCELADO
+  DESISTENCIA
+  REAGENDADO
+  NAO_COMPARECEU
+}
 // Enum para o tipo de evolução (Sigilo)
 enum TipoEvolucao {
   GERAL        // Todos podem ver (Enfermagem, Médico, etc.)
@@ -357,9 +366,13 @@ model Agendamento {
   paciente         Paciente          @relation(fields: [pacienteId], references: [id])
   pacienteId       Int
 
+  observacao       String?
+
   // Relação: O Agendamento é com UM Profissional (Usuário)
   usuario          Usuario           @relation(fields: [usuarioId], references: [id])
   usuarioId        Int
+
+
 
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt

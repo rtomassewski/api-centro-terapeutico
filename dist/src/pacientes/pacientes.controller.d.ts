@@ -20,43 +20,43 @@ export declare class PacientesController {
         id: number;
         nome_completo: string;
         clinicaId: number;
-        status: import("@prisma/client").$Enums.StatusPaciente;
         nome_social: string | null;
         data_nascimento: Date;
         cpf: string;
         nome_responsavel: string;
         telefone_responsavel: string;
+        status: import("@prisma/client").$Enums.StatusPaciente;
         data_admissao: Date;
     }>;
     findAll(req: any, query: QueryPacienteDto): Promise<{
         id: number;
         nome_completo: string;
-        status: import("@prisma/client").$Enums.StatusPaciente;
         nome_social: string | null;
         data_nascimento: Date;
+        status: import("@prisma/client").$Enums.StatusPaciente;
     }[]>;
     findOne(pacienteId: number, req: any): Promise<{
         id: number;
         nome_completo: string;
         clinicaId: number;
-        status: import("@prisma/client").$Enums.StatusPaciente;
         nome_social: string | null;
         data_nascimento: Date;
         cpf: string;
         nome_responsavel: string;
         telefone_responsavel: string;
+        status: import("@prisma/client").$Enums.StatusPaciente;
         data_admissao: Date;
     }>;
     update(pacienteId: number, updatePacienteDto: UpdatePacienteDto, req: any): Promise<{
         id: number;
         nome_completo: string;
         clinicaId: number;
-        status: import("@prisma/client").$Enums.StatusPaciente;
         nome_social: string | null;
         data_nascimento: Date;
         cpf: string;
         nome_responsavel: string;
         telefone_responsavel: string;
+        status: import("@prisma/client").$Enums.StatusPaciente;
         data_admissao: Date;
     }>;
     checkIn(pacienteId: number, dto: CheckInPacienteDto, req: any): Promise<{
@@ -173,13 +173,13 @@ export declare class PacientesController {
     } & {
         id: number;
         createdAt: Date;
-        ativa: boolean;
         pacienteId: number;
         produtoId: number;
         quantidade_por_dose: number;
         dosagem: string | null;
         posologia: string;
         data_prescricao: Date;
+        ativa: boolean;
         usuarioId: number;
     }>;
     findPrescricoes(pacienteId: number, req: any): Promise<({
@@ -192,13 +192,13 @@ export declare class PacientesController {
     } & {
         id: number;
         createdAt: Date;
-        ativa: boolean;
         pacienteId: number;
         produtoId: number;
         quantidade_por_dose: number;
         dosagem: string | null;
         posologia: string;
         data_prescricao: Date;
+        ativa: boolean;
         usuarioId: number;
     })[]>;
 }

@@ -8,10 +8,10 @@ export declare class ClinicasController {
         id: number;
         createdAt: Date;
         updatedAt: Date;
-        razao_social: string;
+        ativa: boolean;
         nome_fantasia: string;
         cnpj: string;
-        ativa: boolean;
+        razao_social: string;
         logo_url: string | null;
         endereco: string | null;
         telefone: string | null;
@@ -20,10 +20,10 @@ export declare class ClinicasController {
         id: number;
         createdAt: Date;
         updatedAt: Date;
-        razao_social: string;
+        ativa: boolean;
         nome_fantasia: string;
         cnpj: string;
-        ativa: boolean;
+        razao_social: string;
         logo_url: string | null;
         endereco: string | null;
         telefone: string | null;

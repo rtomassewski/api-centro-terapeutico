@@ -12,34 +12,30 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateAgendamentoDto = void 0;
 const class_validator_1 = require("class-validator");
 class CreateAgendamentoDto {
-    data_hora_inicio;
-    data_hora_fim;
     pacienteId;
     usuarioId;
-    notas;
+    data_hora_inicio;
+    observacao;
 }
 exports.CreateAgendamentoDto = CreateAgendamentoDto;
+__decorate([
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", Number)
+], CreateAgendamentoDto.prototype, "pacienteId", void 0);
+__decorate([
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", Number)
+], CreateAgendamentoDto.prototype, "usuarioId", void 0);
 __decorate([
     (0, class_validator_1.IsDateString)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], CreateAgendamentoDto.prototype, "data_hora_inicio", void 0);
 __decorate([
-    (0, class_validator_1.IsDateString)(),
-    (0, class_validator_1.IsNotEmpty)(),
-    __metadata("design:type", String)
-], CreateAgendamentoDto.prototype, "data_hora_fim", void 0);
-__decorate([
-    (0, class_validator_1.IsInt)(),
-    __metadata("design:type", Number)
-], CreateAgendamentoDto.prototype, "pacienteId", void 0);
-__decorate([
-    (0, class_validator_1.IsInt)(),
-    __metadata("design:type", Number)
-], CreateAgendamentoDto.prototype, "usuarioId", void 0);
-__decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
-], CreateAgendamentoDto.prototype, "notas", void 0);
+], CreateAgendamentoDto.prototype, "observacao", void 0);
 //# sourceMappingURL=create-agendamento.dto.js.map

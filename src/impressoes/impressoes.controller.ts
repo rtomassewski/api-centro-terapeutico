@@ -7,6 +7,7 @@ import {
   Res,
   UseGuards,
   Request,
+  Query
 } from '@nestjs/common';
 import { ImpressoesService } from './impressoes.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -30,6 +31,29 @@ export class ImpressoesController {
     NomePapel.TERAPEUTA,
     NomePapel.TECNICO
   )
+
+  @Get('financeiro')
+  @Roles(NomePapel.ADMINISTRADOR, NomePapel.COORDENADOR) // Apenas Gestores
+  async getRelatorioFinanceiro(
+    @Request() req,
+    @Res() res: Response,
+    @Query('inicio') inicio?: string, // Query params opcionais
+    @Query('fim') fim?: string,
+  ) {
+    const pdfBuffer = await this.impressoesService.gerarRelatorioFinanceiro(
+      req.user,
+      inicio,
+      fim,
+    );
+
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Length': pdfBuffer.length,
+      'Content-Disposition': `attachment; filename="relatorio_financeiro.pdf"`,
+    });
+
+    res.end(pdfBuffer);
+  }
   async getProntuarioPdf(
     @Param('id', ParseIntPipe) pacienteId: number,
     @Request() req,

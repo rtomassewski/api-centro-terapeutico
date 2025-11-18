@@ -11,34 +11,13 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.QueryAgendamentoDto = void 0;
 const class_validator_1 = require("class-validator");
-const class_transformer_1 = require("class-transformer");
 class QueryAgendamentoDto {
-    data_inicio;
-    data_fim;
-    usuarioId;
-    pacienteId;
+    date;
 }
 exports.QueryAgendamentoDto = QueryAgendamentoDto;
 __decorate([
-    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsDateString)(),
+    (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
-], QueryAgendamentoDto.prototype, "data_inicio", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsDateString)(),
-    __metadata("design:type", String)
-], QueryAgendamentoDto.prototype, "data_fim", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsInt)(),
-    (0, class_transformer_1.Type)(() => Number),
-    __metadata("design:type", Number)
-], QueryAgendamentoDto.prototype, "usuarioId", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsInt)(),
-    (0, class_transformer_1.Type)(() => Number),
-    __metadata("design:type", Number)
-], QueryAgendamentoDto.prototype, "pacienteId", void 0);
+], QueryAgendamentoDto.prototype, "date", void 0);
 //# sourceMappingURL=query-agendamento.dto.js.map

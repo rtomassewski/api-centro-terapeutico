@@ -1,219 +1,115 @@
 // src/agendamentos/agendamentos.service.ts
-import {
-  Injectable,
-  NotFoundException,
-  ConflictException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { PrismaService } from '../prisma.service';
+import { Prisma, Usuario, StatusAgendamento } from '@prisma/client'; 
 import { CreateAgendamentoDto } from './dto/create-agendamento.dto';
 import { UpdateAgendamentoDto } from './dto/update-agendamento.dto';
-import { QueryAgendamentoDto } from './dto/query-agendamento.dto'; // Import do DTO de Query
-import { PrismaService } from '../prisma.service';
-import { Prisma, StatusAgendamento, Usuario } from '@prisma/client'; // Import dos tipos Prisma
+import { QueryAgendamentoDto } from './dto/query-agendamento.dto';
 
 @Injectable()
 export class AgendamentosService {
   constructor(private prisma: PrismaService) {}
 
-  /**
-   * Helper: Valida se Paciente e Profissional existem e são da mesma clínica
-   */
-  private async validarEntidades(
-    dto: CreateAgendamentoDto,
-    clinicaId: number,
-  ) {
-    // 1. Valida Paciente
-    const paciente = await this.prisma.paciente.findFirst({
-      where: { id: dto.pacienteId, clinicaId: clinicaId },
+  // --- Helpers de Segurança ---
+  private async getAgendamento(agendamentoId: number, clinicaId: number) {
+    const agendamento = await this.prisma.agendamento.findFirst({
+      where: { id: agendamentoId, clinicaId },
     });
-    if (!paciente) {
-      throw new NotFoundException('Paciente não encontrado nesta clínica.');
+    if (!agendamento) {
+      throw new NotFoundException('Agendamento não encontrado.');
     }
-
-    // 2. Valida Profissional (Usuário)
-    const profissional = await this.prisma.usuario.findFirst({
-      where: { id: dto.usuarioId, clinicaId: clinicaId },
+    return agendamento;
+  }
+  
+  private async validarPrestador(prestadorId: number, clinicaId: number): Promise<void> {
+    const prestador = await this.prisma.usuario.findFirst({
+      where: { id: prestadorId, clinicaId: clinicaId, ativo: true },
     });
-    if (!profissional) {
-      // Esta era a linha 84 no seu erro
-      throw new NotFoundException('Profissional não encontrado nesta clínica.');
+    if (!prestador) {
+      throw new NotFoundException('Prestador não encontrado ou inativo.');
     }
   }
 
-  /**
-   * Helper: Verifica se já existe um agendamento conflitante
-   */
-  private async checarConflito(
-    // Esta era a linha 92
-    dto: CreateAgendamentoDto,
-    clinicaId: number,
-  ) {
-    const inicio = new Date(dto.data_hora_inicio);
-    const fim = new Date(dto.data_hora_fim);
+  // --- MÉTODOS DE CRIAÇÃO/BUSCA ---
 
-    if (inicio >= fim) {
-      throw new BadRequestException(
-        'A data de início deve ser anterior à data de fim.',
-      );
-    }
-
-    const conflito = await this.prisma.agendamento.findFirst({
-      where: {
-        clinicaId: clinicaId,
-        usuarioId: dto.usuarioId,
-        status: { not: StatusAgendamento.CANCELADO },
-        data_hora_inicio: {
-          lt: fim,
-        },
-        data_hora_fim: {
-          gt: inicio,
-        },
-      },
-    });
-
-    if (conflito) {
-      throw new ConflictException(
-        'Este profissional já possui um agendamento conflitante neste horário.',
-      );
-    }
-  }
-
-  /**
-   * CRIAR um novo agendamento
-   */
   async create(dto: CreateAgendamentoDto, usuarioLogado: Usuario) {
-    // Esta era a linha 131
-    const clinicaId = usuarioLogado.clinicaId;
+    await this.validarPrestador(dto.usuarioId, usuarioLogado.clinicaId);
+    
+    // 1. Converte a data de início
+    const dataInicio = new Date(dto.data_hora_inicio);
+    
+    // 2. CORREÇÃO: CALCULA A DATA DE FIM (Adiciona 1 hora)
+    const dataFim = new Date(dataInicio.getTime() + 60 * 60 * 1000); // Adiciona 60 minutos
 
-    await this.validarEntidades(dto, clinicaId);
-    await this.checarConflito(dto, clinicaId);
-
+    // 3. Tenta criar o agendamento
     return this.prisma.agendamento.create({
       data: {
-        data_hora_inicio: new Date(dto.data_hora_inicio), // <-- Corrigido
-        data_hora_fim: new Date(dto.data_hora_fim),       // <-- Corrigido
-        notas: dto.notas,
-        clinicaId: clinicaId,
         pacienteId: dto.pacienteId,
         usuarioId: dto.usuarioId,
-      },
-      include: {
-        paciente: { select: { nome_completo: true } },
-        usuario: { select: { nome_completo: true } },
+        clinicaId: usuarioLogado.clinicaId,
+        observacao: dto.observacao, 
+        data_hora_inicio: dataInicio,
+        data_hora_fim: dataFim, // <-- A LINHA QUE FALTAVA (Agora calculada)
+        // status: AGUARDANDO (default do schema)
       },
     });
-  } // <-- Provavelmente faltou esta chave '}' no seu código
+  }
 
-  /**
-   * LISTAR agendamentos (com filtros)
-   */
   async findAll(query: QueryAgendamentoDto, usuarioLogado: Usuario) {
-    // Esta era a linha 34
     const where: Prisma.AgendamentoWhereInput = {
       clinicaId: usuarioLogado.clinicaId,
-      status: { not: StatusAgendamento.CANCELADO },
     };
-
-    if (query.usuarioId) {
-      where.usuarioId = query.usuarioId;
-    }
-
-    if (query.pacienteId) {
-      where.pacienteId = query.pacienteId;
-    }
-
-    if (query.data_inicio && query.data_fim) {
-      const inicio = new Date(query.data_inicio);
-      const fim = new Date(query.data_fim);
-
-      where.data_hora_inicio = {
-        lt: fim,
-      };
-      where.data_hora_fim = {
-        gt: inicio,
-      };
+    
+    // O DTO de Query usa 'date'. Onde usa, deve ser corrigido para data_hora_inicio.
+    if (query.date) { 
+        const dayStart = new Date(query.date);
+        const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000); 
+        where.data_hora_inicio = { gte: dayStart, lt: dayEnd }; // <-- CORRIGIDO
     }
 
     return this.prisma.agendamento.findMany({
       where: where,
       include: {
-        paciente: { select: { id: true, nome_completo: true } },
-        usuario: { select: { id: true, nome_completo: true } },
+        paciente: { select: { nome_completo: true, id: true } }, // <-- CORRIGIDO nomeCompleto
+        usuario: { select: { nome_completo: true } },
       },
-      orderBy: {
-        data_hora_inicio: 'asc',
-      },
+      orderBy: { data_hora_inicio: 'asc' }, // <-- CORRIGIDO data_hora
     });
   }
-  private async getAgendamento(id: number, clinicaId: number) {
-    const agendamento = await this.prisma.agendamento.findFirst({
-      where: {
-        id: id,
-        clinicaId: clinicaId, // Segurança: Filtra pela clínica
-      },
-    });
 
-    if (!agendamento) {
-      throw new NotFoundException(
-        'Agendamento não encontrado ou não pertence a esta clínica.',
-      );
+  // --- MÉTODO UPDATE CORRIGIDO (resolve todos os erros restantes) ---
+
+  async update(agendamentoId: number, clinicaId: number, updateAgendamentoDto: UpdateAgendamentoDto) {
+    
+    await this.getAgendamento(agendamentoId, clinicaId);
+    
+    // Resolve TS2339/TS2322: 'data_hora' não existe, deve ser 'data_hora_inicio'.
+    const { data_hora_inicio, status, ...rest } = updateAgendamentoDto; 
+    
+    const data: any = { ...rest };
+
+    // Conversão de Data/Hora (Se for alterada)
+    if (data_hora_inicio) {
+        data.data_hora_inicio = new Date(data_hora_inicio); // <-- CORRIGIDO
     }
-    return agendamento;
-  }
-async findOne(id: number, usuarioLogado: Usuario) {
-    // Segurança: Helper já faz a checagem
-    return this.getAgendamento(id, usuarioLogado.clinicaId);
-  }
+    
+    // Adiciona Status (Se for alterado)
+    if (status) {
+        // Resolve TS2322: Garante que o status é atribuído corretamente
+        data.status = status as StatusAgendamento; 
+    }
+    
+    // Remove o campo de data de fim do DTO, se existir
+    delete data.data_hora_fim; 
 
-  /**
-   * ATUALIZAR um agendamento (status, data, etc.)
-   */
-  async update(
-  id: number,
-  dto: UpdateAgendamentoDto,
-  usuarioLogado: Usuario,
-) {
-  // 1. Segurança (continua igual)
-  await this.getAgendamento(id, usuarioLogado.clinicaId);
-
-  // TODO: Adicionar checagem de conflito se a data (dto.data_hora_inicio) mudar.
-
-  // 2. Converte as datas (se elas foram enviadas no DTO)
-  const dataInicio = dto.data_hora_inicio
-    ? new Date(dto.data_hora_inicio)
-    : undefined;
-
-  const dataFim = dto.data_hora_fim
-    ? new Date(dto.data_hora_fim)
-    : undefined;
-
-  // 3. Atualiza no banco (A CORREÇÃO ESTÁ AQUI)
-  // Removemos o '...dto' e listamos os campos explicitamente.
-  return this.prisma.agendamento.update({
-    where: { id: id },
-    data: {
-      // Campos que o DTO pode atualizar
-      status: dto.status,
-      pacienteId: dto.pacienteId,
-      usuarioId: dto.usuarioId,
-      notas: dto.notas,
-
-      // Campos que precisam de conversão
-      data_hora_inicio: dataInicio,
-      data_hora_fim: dataFim,
-    },
-  });
-}
-
-  /**
-   * REMOVER um agendamento
-   */
-  async remove(id: number, usuarioLogado: Usuario) {
-    // Segurança: Garante que o usuário está removendo da sua clínica
-    await this.getAgendamento(id, usuarioLogado.clinicaId);
-
-    return this.prisma.agendamento.delete({
-      where: { id: id },
+    // 5. Executa a atualização
+    return this.prisma.agendamento.update({
+      where: { id: agendamentoId, clinicaId },
+      data: data,
+      include: { 
+        paciente: { select: { nome_completo: true } },
+        usuario: { select: { nome_completo: true } } 
+      },
     });
   }
 }

@@ -19,7 +19,7 @@ class UpdateAgendamentoDto extends (0, mapped_types_1.PartialType)(create_agenda
 }
 exports.UpdateAgendamentoDto = UpdateAgendamentoDto;
 __decorate([
-    (0, class_validator_1.IsEnum)(client_1.StatusAgendamento),
+    (0, class_validator_1.IsEnum)(client_1.StatusAtendimento),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], UpdateAgendamentoDto.prototype, "status", void 0);

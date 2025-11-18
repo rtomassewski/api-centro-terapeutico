@@ -12,139 +12,79 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AgendamentosService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma.service");
-const client_1 = require("@prisma/client");
 let AgendamentosService = class AgendamentosService {
     prisma;
     constructor(prisma) {
         this.prisma = prisma;
     }
-    async validarEntidades(dto, clinicaId) {
-        const paciente = await this.prisma.paciente.findFirst({
-            where: { id: dto.pacienteId, clinicaId: clinicaId },
+    async getAgendamento(agendamentoId, clinicaId) {
+        const agendamento = await this.prisma.agendamento.findFirst({
+            where: { id: agendamentoId, clinicaId },
         });
-        if (!paciente) {
-            throw new common_1.NotFoundException('Paciente não encontrado nesta clínica.');
+        if (!agendamento) {
+            throw new common_1.NotFoundException('Agendamento não encontrado.');
         }
-        const profissional = await this.prisma.usuario.findFirst({
-            where: { id: dto.usuarioId, clinicaId: clinicaId },
-        });
-        if (!profissional) {
-            throw new common_1.NotFoundException('Profissional não encontrado nesta clínica.');
-        }
+        return agendamento;
     }
-    async checarConflito(dto, clinicaId) {
-        const inicio = new Date(dto.data_hora_inicio);
-        const fim = new Date(dto.data_hora_fim);
-        if (inicio >= fim) {
-            throw new common_1.BadRequestException('A data de início deve ser anterior à data de fim.');
-        }
-        const conflito = await this.prisma.agendamento.findFirst({
-            where: {
-                clinicaId: clinicaId,
-                usuarioId: dto.usuarioId,
-                status: { not: client_1.StatusAgendamento.CANCELADO },
-                data_hora_inicio: {
-                    lt: fim,
-                },
-                data_hora_fim: {
-                    gt: inicio,
-                },
-            },
+    async validarPrestador(prestadorId, clinicaId) {
+        const prestador = await this.prisma.usuario.findFirst({
+            where: { id: prestadorId, clinicaId: clinicaId, ativo: true },
         });
-        if (conflito) {
-            throw new common_1.ConflictException('Este profissional já possui um agendamento conflitante neste horário.');
+        if (!prestador) {
+            throw new common_1.NotFoundException('Prestador não encontrado ou inativo.');
         }
     }
     async create(dto, usuarioLogado) {
-        const clinicaId = usuarioLogado.clinicaId;
-        await this.validarEntidades(dto, clinicaId);
-        await this.checarConflito(dto, clinicaId);
+        await this.validarPrestador(dto.usuarioId, usuarioLogado.clinicaId);
+        const dataInicio = new Date(dto.data_hora_inicio);
+        const dataFim = new Date(dataInicio.getTime() + 60 * 60 * 1000);
         return this.prisma.agendamento.create({
             data: {
-                data_hora_inicio: new Date(dto.data_hora_inicio),
-                data_hora_fim: new Date(dto.data_hora_fim),
-                notas: dto.notas,
-                clinicaId: clinicaId,
                 pacienteId: dto.pacienteId,
                 usuarioId: dto.usuarioId,
-            },
-            include: {
-                paciente: { select: { nome_completo: true } },
-                usuario: { select: { nome_completo: true } },
+                clinicaId: usuarioLogado.clinicaId,
+                observacao: dto.observacao,
+                data_hora_inicio: dataInicio,
+                data_hora_fim: dataFim,
             },
         });
     }
     async findAll(query, usuarioLogado) {
         const where = {
             clinicaId: usuarioLogado.clinicaId,
-            status: { not: client_1.StatusAgendamento.CANCELADO },
         };
-        if (query.usuarioId) {
-            where.usuarioId = query.usuarioId;
-        }
-        if (query.pacienteId) {
-            where.pacienteId = query.pacienteId;
-        }
-        if (query.data_inicio && query.data_fim) {
-            const inicio = new Date(query.data_inicio);
-            const fim = new Date(query.data_fim);
-            where.data_hora_inicio = {
-                lt: fim,
-            };
-            where.data_hora_fim = {
-                gt: inicio,
-            };
+        if (query.date) {
+            const dayStart = new Date(query.date);
+            const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+            where.data_hora_inicio = { gte: dayStart, lt: dayEnd };
         }
         return this.prisma.agendamento.findMany({
             where: where,
             include: {
-                paciente: { select: { id: true, nome_completo: true } },
-                usuario: { select: { id: true, nome_completo: true } },
+                paciente: { select: { nome_completo: true, id: true } },
+                usuario: { select: { nome_completo: true } },
             },
-            orderBy: {
-                data_hora_inicio: 'asc',
-            },
+            orderBy: { data_hora_inicio: 'asc' },
         });
     }
-    async getAgendamento(id, clinicaId) {
-        const agendamento = await this.prisma.agendamento.findFirst({
-            where: {
-                id: id,
-                clinicaId: clinicaId,
-            },
-        });
-        if (!agendamento) {
-            throw new common_1.NotFoundException('Agendamento não encontrado ou não pertence a esta clínica.');
+    async update(agendamentoId, clinicaId, updateAgendamentoDto) {
+        await this.getAgendamento(agendamentoId, clinicaId);
+        const { data_hora_inicio, status, ...rest } = updateAgendamentoDto;
+        const data = { ...rest };
+        if (data_hora_inicio) {
+            data.data_hora_inicio = new Date(data_hora_inicio);
         }
-        return agendamento;
-    }
-    async findOne(id, usuarioLogado) {
-        return this.getAgendamento(id, usuarioLogado.clinicaId);
-    }
-    async update(id, dto, usuarioLogado) {
-        await this.getAgendamento(id, usuarioLogado.clinicaId);
-        const dataInicio = dto.data_hora_inicio
-            ? new Date(dto.data_hora_inicio)
-            : undefined;
-        const dataFim = dto.data_hora_fim
-            ? new Date(dto.data_hora_fim)
-            : undefined;
+        if (status) {
+            data.status = status;
+        }
+        delete data.data_hora_fim;
         return this.prisma.agendamento.update({
-            where: { id: id },
-            data: {
-                status: dto.status,
-                pacienteId: dto.pacienteId,
-                usuarioId: dto.usuarioId,
-                notas: dto.notas,
-                data_hora_inicio: dataInicio,
-                data_hora_fim: dataFim,
+            where: { id: agendamentoId, clinicaId },
+            data: data,
+            include: {
+                paciente: { select: { nome_completo: true } },
+                usuario: { select: { nome_completo: true } }
             },
-        });
-    }
-    async remove(id, usuarioLogado) {
-        await this.getAgendamento(id, usuarioLogado.clinicaId);
-        return this.prisma.agendamento.delete({
-            where: { id: id },
         });
     }
 };

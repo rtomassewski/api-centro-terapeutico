@@ -1,7 +1,7 @@
 // src/impressoes/impressoes.service.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
-import { NomePapel, TipoEvolucao, Usuario } from '@prisma/client';
+import { NomePapel, TipoEvolucao, Usuario, TipoTransacao } from '@prisma/client';
 import PDFKit = require('pdfkit');
 import axios from 'axios'; // Para buscar a imagem do logo
 
@@ -10,7 +10,7 @@ export class ImpressoesService {
   constructor(private prisma: PrismaService) {}
 
   /**
-   * Helper para buscar todos os dados de um paciente
+   * Helper para buscar todos os dados de um paciente (Completo)
    */
   private async getDadosCompletos(pacienteId: number, clinicaId: number) {
     const paciente = await this.prisma.paciente.findFirst({
@@ -26,7 +26,7 @@ export class ImpressoesService {
         prescricoes: { 
           include: { 
             produto: true,
-            usuario: true 
+            usuario: { select: { nome_completo: true, registro_conselho: true } } // Inclui CRM
           },
           orderBy: { data_prescricao: 'desc' }
         },
@@ -55,24 +55,26 @@ export class ImpressoesService {
     try {
       const response = await axios.get(url, { 
         responseType: 'arraybuffer',
-        // (Adiciona um "disfarce" de navegador para evitar ser bloqueado)
         headers: {
+          // Adiciona um "disfarce" de navegador para evitar ser bloqueado
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'
         }
       });
       return Buffer.from(response.data as ArrayBuffer);
-    } catch (error) {
-      console.error('Erro ao buscar logo (este erro é normal se o URL for inválido/Google Drive):', error.message);
+    } catch (error: any) {
+      console.error('Erro ao buscar logo (falha de rede ou URL inválido):', error.message);
       return null;
     }
   }
+
+  // --- MÓDULO DE PRONTUÁRIO (gerarProntuarioPdf) ---
 
   /**
    * Gera o PDF do Prontuário Completo
    */
   async gerarProntuarioPdf(
     pacienteId: number,
-    usuarioLogado: any,
+    usuarioLogado: any, // Usamos 'any' para o objeto req.user
   ): Promise<Buffer> {
     
     const dados = await this.getDadosCompletos(
@@ -80,9 +82,9 @@ export class ImpressoesService {
       usuarioLogado.clinicaId,
     );
     const paciente = dados;
-    const clinica = dados.clinica;
-
-    // --- CORREÇÃO: O LOGO ESTÁ ATIVADO NOVAMENTE ---
+    const clinica = dados.clinica; // Clinica é obrigatório
+    
+    // O TypeScript agora sabe que 'clinica' é um objeto válido
     const logoBuffer = await this.getLogoBuffer(clinica.logo_url);
     
     const doc = new PDFKit({ size: 'A4', margin: 50 });
@@ -91,10 +93,10 @@ export class ImpressoesService {
     
     // --- Início do Desenho do PDF ---
 
-    // --- CORREÇÃO: O CÓDIGO DE DESENHO DO CABEÇALHO FOI RESTAURADO ---
+    // CABEÇALHO (Logo, Nome da Clínica, Endereço, Telefone)
     const headerY = 40;
-    const headerXLogo = 160; // Posição do texto se o logo existir
-    const headerXSemLogo = 50; // Posição do texto se não houver logo
+    const headerXLogo = 160; 
+    const headerXSemLogo = 50; 
     
     if (logoBuffer) {
       try {
@@ -103,7 +105,7 @@ export class ImpressoesService {
         doc.fontSize(10).text(clinica.endereco || '', headerXLogo, headerY + 35);
         doc.fontSize(10).text(clinica.telefone || '', headerXLogo, headerY + 50);
       } catch (e) {
-        // (Se o logoBuffer estiver corrompido, desenha sem ele)
+        // Fallback se o PDFKit falhar ao processar a imagem
         doc.fontSize(18).text(clinica.nome_fantasia || '', headerXSemLogo, headerY + 10);
         doc.fontSize(10).text(clinica.endereco || '', headerXSemLogo, headerY + 35);
         doc.fontSize(10).text(clinica.telefone || '', headerXSemLogo, headerY + 50);
@@ -115,20 +117,18 @@ export class ImpressoesService {
       doc.fontSize(10).text(clinica.telefone || '', headerXSemLogo, headerY + 50);
     }
     
-    doc.moveDown(4); // Pula espaço após o cabeçalho
+    doc.moveDown(4); 
     doc.fontSize(16).text(`Prontuário do Paciente`, { align: 'center' });
     doc.moveDown(1);
     
-    // Dados do Paciente
+    // DADOS DO PACIENTE
     doc.fontSize(12).text(`Paciente: ${paciente.nome_completo}`, { continued: true });
     doc.text(` (ID: ${paciente.id})`);
     doc.text(`CPF: ${paciente.cpf}`);
     doc.text(`Data Nasc.: ${new Date(paciente.data_nascimento).toLocaleDateString('pt-BR')}`);
     doc.moveDown(2);
-    // --- FIM DA CORREÇÃO DO CABEÇALHO ---
     
-    
-    // --- LÓGICA DE SIGILO (Já está correta) ---
+    // LÓGICA DE SIGILO
     const papelUsuario = usuarioLogado.papel.nome;
     const tiposVisiveis: TipoEvolucao[] = [TipoEvolucao.GERAL];
     if (papelUsuario === NomePapel.PSICOLOGO) {
@@ -145,7 +145,7 @@ export class ImpressoesService {
       tiposVisiveis.push(TipoEvolucao.PSICOLOGICA, TipoEvolucao.TERAPEUTICA);
     }
 
-    // (Histórico Médico - Filtrado)
+    // 1. HISTÓRICO MÉDICO
     doc.fontSize(14).text('Histórico Médico', { underline: true });
     doc.moveDown(0.5);
     const historicosVisiveis = dados.historicos_medicos.filter((h) => 
@@ -156,12 +156,11 @@ export class ImpressoesService {
       doc.fontSize(10).fillColor('gray').text(`(Por: ${h.usuario_preencheu.nome_completo})`);
       if(h.alergias) doc.fontSize(10).fillColor('black').text(`Alergias: ${h.alergias}`);
       if(h.condicoes_previas) doc.fontSize(10).fillColor('black').text(`Condições: ${h.condicoes_previas}`);
-      // (Adicionar outros campos...)
       doc.moveDown(0.5);
     }
     doc.moveDown(1);
     
-    // (Evoluções - Filtrado)
+    // 2. EVOLUÇÕES
     doc.fontSize(14).text('Evoluções', { underline: true });
     doc.moveDown(0.5);
     const evolucoesVisiveis = dados.evolucoes.filter((evolucao) =>
@@ -175,9 +174,9 @@ export class ImpressoesService {
       doc.fontSize(10).fillColor('gray').text(evolucao.descricao);
       doc.moveDown(0.5);
     }
-    doc.moveDown(1); // (Adicionado espaço)
+    doc.moveDown(1);
     
-    // (Prescrições - Adicionado no passo anterior)
+    // 3. PRESCRIÇÕES
     doc.fontSize(14).text('Prescrições Ativas', { underline: true });
     doc.moveDown(0.5);
     const prescricoesAtivas = dados.prescricoes.filter((p) => p.ativa);
@@ -191,6 +190,7 @@ export class ImpressoesService {
         }
         doc.fontSize(10).fillColor('gray').text(`Qtd: ${prescricao.quantidade_por_dose} | Posologia: ${prescricao.posologia}`);
         const medico = prescricao.usuario;
+        // Saída do CRM/Registro do médico prescritor
         const registro = medico.registro_conselho ? ` (${medico.registro_conselho})` : '';
         doc.fontSize(9).fillColor('darkgray').text(`Prescrito por: ${medico.nome_completo}${registro}`);
         doc.moveDown(0.5);
@@ -198,10 +198,131 @@ export class ImpressoesService {
     }
     doc.moveDown(1);
     
-    // (Adicionar Sinais Vitais, Notas de Comportamento...)
-    
+    // 4. SINAIS VITAIS (Mostrar o mais recente)
+    doc.fontSize(14).text('Sinais Vitais Recentes', { underline: true });
+    doc.moveDown(0.5);
+    if (dados.sinais_vitais.length > 0) {
+        const sinal = dados.sinais_vitais[0]; // Pega o mais recente
+        doc.fontSize(10).fillColor('black').text(`Data: ${sinal.data_hora_afericao.toLocaleString('pt-BR')}`);
+        doc.text(`PA: ${sinal.pressao_arterial || '--'} | FC: ${sinal.frequencia_cardiaca || '--'} | Temp: ${sinal.temperatura || '--'}°C`);
+        doc.text(`SPO2: ${sinal.saturacao_oxigenio || '--'}% | Dor: ${sinal.dor || '--'} | Glicemia: ${sinal.glicemia || '--'}`);
+    } else {
+        doc.fontSize(10).fillColor('gray').text('Nenhum sinal vital recente.');
+    }
+    doc.moveDown(1);
+
+
     // --- Fim do Desenho do PDF ---
     
+    doc.end();
+
+    return new Promise((resolve) => {
+      doc.on('end', () => {
+        resolve(Buffer.concat(buffers));
+      });
+    });
+  }
+
+
+  // --- MÓDULO FINANCEIRO (gerarRelatorioFinanceiro) ---
+  
+  /**
+   * (Módulo Financeiro) Gera o Relatório Financeiro em PDF
+   */
+  async gerarRelatorioFinanceiro(
+    usuarioLogado: any,
+    dataInicio?: string,
+    dataFim?: string,
+  ): Promise<Buffer> {
+    const clinicaId = usuarioLogado.clinicaId;
+
+    // 1. Busca os dados da Clínica (para o cabeçalho)
+    const clinica = await this.prisma.clinica.findUnique({ where: { id: clinicaId } });
+
+    // 2. Filtros de Data
+    const where: any = { clinicaId: clinicaId };
+    if (dataInicio && dataFim) {
+      where.data_vencimento = {
+        gte: new Date(dataInicio),
+        lte: new Date(dataFim),
+      };
+    }
+
+    // 3. Busca as Transações
+    const transacoes = await this.prisma.transacaoFinanceira.findMany({
+      where: where,
+      include: { categoria: true, paciente: true },
+      orderBy: { data_vencimento: 'asc' },
+    });
+
+    // 4. Cálculos
+    let totalReceitas = 0;
+    let totalDespesas = 0;
+    transacoes.forEach(t => {
+      if (t.tipo === TipoTransacao.RECEITA) totalReceitas += Number(t.valor);
+      else totalDespesas += Number(t.valor);
+    });
+    const saldo = totalReceitas - totalDespesas;
+
+    // 5. Prepara o PDF
+    const doc = new PDFKit({ size: 'A4', margin: 50 });
+    const buffers: Buffer[] = [];
+    doc.on('data', buffers.push.bind(buffers));
+
+    // --- Cabeçalho (Reutilizando lógica simples) ---
+    const logoBuffer = await this.getLogoBuffer(clinica!.logo_url);
+    if (logoBuffer) {
+        try { doc.image(logoBuffer, 50, 40, { width: 80 }); } catch(e) {}
+    }
+    
+    // CORREÇÃO: Uso do '!' para satisfazer o TypeScript
+    doc.fontSize(18).text(clinica!.nome_fantasia || '', 150, 50);
+    doc.fontSize(12).text('Relatório Financeiro', 150, 75);
+    
+    // CORREÇÃO: Verificação de ambas as datas
+    if (dataInicio && dataFim) {
+        doc.fontSize(10).text(`Período: ${dataInicio.split('T')[0]} a ${dataFim.split('T')[0]}`, 150, 90);
+    } else {
+        doc.fontSize(10).text(`Período: Geral (Todo o histórico)`, 150, 90);
+    }
+    
+    doc.moveDown(4);
+
+    // --- Resumo Financeiro ---
+    doc.fontSize(12).text('Resumo do Período', { underline: true });
+    doc.moveDown(0.5);
+    doc.fillColor('green').text(`Total Receitas: R$ ${totalReceitas.toFixed(2)}`);
+    doc.fillColor('red').text(`Total Despesas: R$ ${totalDespesas.toFixed(2)}`);
+    doc.fillColor('black').text(`Saldo Líquido: R$ ${saldo.toFixed(2)}`);
+    doc.moveDown(2);
+
+    // --- Tabela de Transações ---
+    // (Desenho manual simples de linhas)
+    doc.fontSize(10).text('Data', 50, doc.y, { width: 70 });
+    doc.text('Descrição', 130, doc.y, { width: 200 });
+    doc.text('Categ.', 340, doc.y, { width: 80 });
+    doc.text('Valor (R$)', 430, doc.y, { width: 80, align: 'right' });
+    
+    doc.moveTo(50, doc.y + 15).lineTo(550, doc.y + 15).stroke(); // Linha
+    doc.moveDown(1.5);
+
+    for (const t of transacoes) {
+      // Verifica se cabe na página, se não, adiciona nova
+      if (doc.y > 750) { doc.addPage(); }
+
+      const dataFormatada = t.data_vencimento.toISOString().split('T')[0].split('-').reverse().join('/');
+      const cor = t.tipo === TipoTransacao.RECEITA ? 'green' : 'red';
+      const sinal = t.tipo === TipoTransacao.RECEITA ? '+' : '-';
+
+      doc.fillColor('black').text(dataFormatada, 50, doc.y, { width: 70 });
+      doc.text(t.descricao.substring(0, 35), 130, doc.y, { width: 200 }); // Limita texto
+      doc.text(t.categoria?.nome || '-', 340, doc.y, { width: 80 });
+      
+      doc.fillColor(cor).text(`${sinal} ${Number(t.valor).toFixed(2)}`, 430, doc.y, { width: 80, align: 'right' });
+      
+      doc.moveDown(0.8); // Próxima linha
+    }
+
     doc.end();
 
     return new Promise((resolve) => {

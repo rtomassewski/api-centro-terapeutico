@@ -5,4 +5,5 @@ export declare class ImpressoesService {
     private getDadosCompletos;
     private getLogoBuffer;
     gerarProntuarioPdf(pacienteId: number, usuarioLogado: any): Promise<Buffer>;
+    gerarRelatorioFinanceiro(usuarioLogado: any, dataInicio?: string, dataFim?: string): Promise<Buffer>;
 }

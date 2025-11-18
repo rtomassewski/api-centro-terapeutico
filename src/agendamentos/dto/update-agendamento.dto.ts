@@ -2,10 +2,13 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { CreateAgendamentoDto } from './create-agendamento.dto';
 import { IsEnum, IsOptional } from 'class-validator';
-import { StatusAgendamento } from '@prisma/client';
+import { StatusAtendimento } from '@prisma/client';
 
+// PartialType torna todos os campos de CreateAgendamentoDto opcionais
 export class UpdateAgendamentoDto extends PartialType(CreateAgendamentoDto) {
-  @IsEnum(StatusAgendamento)
-  @IsOptional()
-  status?: StatusAgendamento; // AGENDADO, REALIZADO, CANCELADO, FALTOU
+    // data_hora já é opcional via PartialType (permite reagendamento)
+    
+    @IsEnum(StatusAtendimento)
+    @IsOptional()
+    status?: StatusAtendimento;
 }

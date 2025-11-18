@@ -2,21 +2,19 @@
 import { IsDateString, IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateAgendamentoDto {
-  @IsDateString()
+  @IsInt()
   @IsNotEmpty()
-  data_hora_inicio: string; // Formato: "2025-11-10T14:00:00Z"
-
-  @IsDateString()
-  @IsNotEmpty()
-  data_hora_fim: string; // Formato: "2025-11-10T15:00:00Z"
+  pacienteId: number;
 
   @IsInt()
-  pacienteId: number; // ID do Paciente a ser agendado
+  @IsNotEmpty()
+  usuarioId: number;
 
-  @IsInt()
-  usuarioId: number; // ID do Profissional (Médico/Terapeuta)
+  @IsDateString()
+  @IsNotEmpty()
+  data_hora_inicio: string; // Ex: "2025-11-17T10:00:00Z"
 
   @IsString()
   @IsOptional()
-  notas?: string;
+  observacao?: string; // <-- CORRIGIDO: Adicionado o campo que faltava
 }

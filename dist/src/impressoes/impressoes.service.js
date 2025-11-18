@@ -37,7 +37,7 @@ let ImpressoesService = class ImpressoesService {
                 prescricoes: {
                     include: {
                         produto: true,
-                        usuario: true
+                        usuario: { select: { nome_completo: true, registro_conselho: true } }
                     },
                     orderBy: { data_prescricao: 'desc' }
                 },
@@ -69,7 +69,7 @@ let ImpressoesService = class ImpressoesService {
             return Buffer.from(response.data);
         }
         catch (error) {
-            console.error('Erro ao buscar logo (este erro é normal se o URL for inválido/Google Drive):', error.message);
+            console.error('Erro ao buscar logo (falha de rede ou URL inválido):', error.message);
             return null;
         }
     }
@@ -167,6 +167,93 @@ let ImpressoesService = class ImpressoesService {
             }
         }
         doc.moveDown(1);
+        doc.fontSize(14).text('Sinais Vitais Recentes', { underline: true });
+        doc.moveDown(0.5);
+        if (dados.sinais_vitais.length > 0) {
+            const sinal = dados.sinais_vitais[0];
+            doc.fontSize(10).fillColor('black').text(`Data: ${sinal.data_hora_afericao.toLocaleString('pt-BR')}`);
+            doc.text(`PA: ${sinal.pressao_arterial || '--'} | FC: ${sinal.frequencia_cardiaca || '--'} | Temp: ${sinal.temperatura || '--'}°C`);
+            doc.text(`SPO2: ${sinal.saturacao_oxigenio || '--'}% | Dor: ${sinal.dor || '--'} | Glicemia: ${sinal.glicemia || '--'}`);
+        }
+        else {
+            doc.fontSize(10).fillColor('gray').text('Nenhum sinal vital recente.');
+        }
+        doc.moveDown(1);
+        doc.end();
+        return new Promise((resolve) => {
+            doc.on('end', () => {
+                resolve(Buffer.concat(buffers));
+            });
+        });
+    }
+    async gerarRelatorioFinanceiro(usuarioLogado, dataInicio, dataFim) {
+        const clinicaId = usuarioLogado.clinicaId;
+        const clinica = await this.prisma.clinica.findUnique({ where: { id: clinicaId } });
+        const where = { clinicaId: clinicaId };
+        if (dataInicio && dataFim) {
+            where.data_vencimento = {
+                gte: new Date(dataInicio),
+                lte: new Date(dataFim),
+            };
+        }
+        const transacoes = await this.prisma.transacaoFinanceira.findMany({
+            where: where,
+            include: { categoria: true, paciente: true },
+            orderBy: { data_vencimento: 'asc' },
+        });
+        let totalReceitas = 0;
+        let totalDespesas = 0;
+        transacoes.forEach(t => {
+            if (t.tipo === client_1.TipoTransacao.RECEITA)
+                totalReceitas += Number(t.valor);
+            else
+                totalDespesas += Number(t.valor);
+        });
+        const saldo = totalReceitas - totalDespesas;
+        const doc = new PDFKit({ size: 'A4', margin: 50 });
+        const buffers = [];
+        doc.on('data', buffers.push.bind(buffers));
+        const logoBuffer = await this.getLogoBuffer(clinica.logo_url);
+        if (logoBuffer) {
+            try {
+                doc.image(logoBuffer, 50, 40, { width: 80 });
+            }
+            catch (e) { }
+        }
+        doc.fontSize(18).text(clinica.nome_fantasia || '', 150, 50);
+        doc.fontSize(12).text('Relatório Financeiro', 150, 75);
+        if (dataInicio && dataFim) {
+            doc.fontSize(10).text(`Período: ${dataInicio.split('T')[0]} a ${dataFim.split('T')[0]}`, 150, 90);
+        }
+        else {
+            doc.fontSize(10).text(`Período: Geral (Todo o histórico)`, 150, 90);
+        }
+        doc.moveDown(4);
+        doc.fontSize(12).text('Resumo do Período', { underline: true });
+        doc.moveDown(0.5);
+        doc.fillColor('green').text(`Total Receitas: R$ ${totalReceitas.toFixed(2)}`);
+        doc.fillColor('red').text(`Total Despesas: R$ ${totalDespesas.toFixed(2)}`);
+        doc.fillColor('black').text(`Saldo Líquido: R$ ${saldo.toFixed(2)}`);
+        doc.moveDown(2);
+        doc.fontSize(10).text('Data', 50, doc.y, { width: 70 });
+        doc.text('Descrição', 130, doc.y, { width: 200 });
+        doc.text('Categ.', 340, doc.y, { width: 80 });
+        doc.text('Valor (R$)', 430, doc.y, { width: 80, align: 'right' });
+        doc.moveTo(50, doc.y + 15).lineTo(550, doc.y + 15).stroke();
+        doc.moveDown(1.5);
+        for (const t of transacoes) {
+            if (doc.y > 750) {
+                doc.addPage();
+            }
+            const dataFormatada = t.data_vencimento.toISOString().split('T')[0].split('-').reverse().join('/');
+            const cor = t.tipo === client_1.TipoTransacao.RECEITA ? 'green' : 'red';
+            const sinal = t.tipo === client_1.TipoTransacao.RECEITA ? '+' : '-';
+            doc.fillColor('black').text(dataFormatada, 50, doc.y, { width: 70 });
+            doc.text(t.descricao.substring(0, 35), 130, doc.y, { width: 200 });
+            doc.text(t.categoria?.nome || '-', 340, doc.y, { width: 80 });
+            doc.fillColor(cor).text(`${sinal} ${Number(t.valor).toFixed(2)}`, 430, doc.y, { width: 80, align: 'right' });
+            doc.moveDown(0.8);
+        }
         doc.end();
         return new Promise((resolve) => {
             doc.on('end', () => {

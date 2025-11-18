@@ -1,77 +1,56 @@
 // src/agendamentos/agendamentos.controller.ts
-import {
-  Controller,
-  Post,
-  Body,
-  UseGuards,
-  Request,
-  Get,
-  Query,
-  Patch,
-  Param,
-  Delete,
-  ParseIntPipe,
-} from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Request, Get, Query, Param, ParseIntPipe, Patch, } from '@nestjs/common';
 import { AgendamentosService } from './agendamentos.service';
 import { CreateAgendamentoDto } from './dto/create-agendamento.dto';
-import { QueryAgendamentoDto } from './dto/query-agendamento.dto';
-import { UpdateAgendamentoDto } from './dto/update-agendamento.dto';
+import { UpdateAgendamentoDto } from './dto/update-agendamento.dto'; // Importe o DTO de update
+import { QueryAgendamentoDto } from './dto/query-agendamento.dto'; // Importe o DTO de query
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { RolesGuard } from '../auth/roles.guard'; // 1. Adicione
-import { Roles } from '../auth/roles.decorator'; // 2. Adicione
-import { NomePapel } from '@prisma/client';
+import { RolesGuard } from '../auth/roles.guard'; // Caminho corrigido
+import { Roles } from '../auth/decorators/roles.decorator';
+import { NomePapel } from '@prisma/client'; // Importa o ENUM NomePapel
 
-@UseGuards(JwtAuthGuard, RolesGuard) // 3. Adicione
 @Controller('agendamentos')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class AgendamentosController {
   constructor(private readonly agendamentosService: AgendamentosService) {}
 
   @Post()
-  @UseGuards(JwtAuthGuard) // 1. Protegido por login
-  @Roles(NomePapel.ADMINISTRADOR, NomePapel.ENFERMEIRO, NomePapel.ATENDENTE)
-  create(@Body() createDto: CreateAgendamentoDto, @Request() req) {
-    // 2. Passa o DTO e o usuário logado (para pegar o clinicaId)
+  @Roles(NomePapel.ADMINISTRADOR, NomePapel.COORDENADOR, NomePapel.ATENDENTE)
+  async create(
+    @Body() createDto: CreateAgendamentoDto,
+    @Request() req,
+  ) {
     return this.agendamentosService.create(createDto, req.user);
   }
 
-  // (Deixe os outros métodos gerados pelo CLI comentados por enquanto)
- @Get()
-  // 6. Adicione @Roles (incluindo Atendente)
+  @Get()
   @Roles(
     NomePapel.ADMINISTRADOR,
-    NomePapel.ENFERMEIRO,
-    NomePapel.TECNICO,
+    NomePapel.COORDENADOR,
+    NomePapel.ATENDENTE,
     NomePapel.MEDICO,
-    NomePapel.ATENDENTE
   )
-  findAll(
+  async findAll(
     @Query() query: QueryAgendamentoDto,
     @Request() req,
   ) {
     return this.agendamentosService.findAll(query, req.user);
   }
-@Get(':id')
-  findOne(
-    @Param('id', ParseIntPipe) id: number,
-    @Request() req,
-  ) {
-    return this.agendamentosService.findOne(id, req.user);
-  }
-
+  
+  // --- MÉTODO UPDATE CORRIGIDO ---
   @Patch(':id')
-  update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() updateDto: UpdateAgendamentoDto,
+  @Roles(NomePapel.ADMINISTRADOR, NomePapel.COORDENADOR, NomePapel.ATENDENTE)
+  async update(
+    @Param('id', ParseIntPipe) agendamentoId: number,
     @Request() req,
+    @Body() updateAgendamentoDto: UpdateAgendamentoDto,
   ) {
-    return this.agendamentosService.update(id, updateDto, req.user);
+    return this.agendamentosService.update(
+      agendamentoId,
+      req.user.clinicaId,
+      updateAgendamentoDto,
+    );
   }
 
-  @Delete(':id')
-  remove(
-    @Param('id', ParseIntPipe) id: number,
-    @Request() req,
-  ) {
-    return this.agendamentosService.remove(id, req.user);
-  }
+  // (Não há necessidade de 'findOne' ou 'remove' neste controlador para o MVP)
 }

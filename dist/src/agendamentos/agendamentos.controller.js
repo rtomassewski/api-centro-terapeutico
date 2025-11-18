@@ -16,81 +16,59 @@ exports.AgendamentosController = void 0;
 const common_1 = require("@nestjs/common");
 const agendamentos_service_1 = require("./agendamentos.service");
 const create_agendamento_dto_1 = require("./dto/create-agendamento.dto");
-const query_agendamento_dto_1 = require("./dto/query-agendamento.dto");
 const update_agendamento_dto_1 = require("./dto/update-agendamento.dto");
+const query_agendamento_dto_1 = require("./dto/query-agendamento.dto");
 const jwt_auth_guard_1 = require("../auth/jwt-auth.guard");
 const roles_guard_1 = require("../auth/roles.guard");
-const roles_decorator_1 = require("../auth/roles.decorator");
+const roles_decorator_1 = require("../auth/decorators/roles.decorator");
 const client_1 = require("@prisma/client");
 let AgendamentosController = class AgendamentosController {
     agendamentosService;
     constructor(agendamentosService) {
         this.agendamentosService = agendamentosService;
     }
-    create(createDto, req) {
+    async create(createDto, req) {
         return this.agendamentosService.create(createDto, req.user);
     }
-    findAll(query, req) {
+    async findAll(query, req) {
         return this.agendamentosService.findAll(query, req.user);
     }
-    findOne(id, req) {
-        return this.agendamentosService.findOne(id, req.user);
-    }
-    update(id, updateDto, req) {
-        return this.agendamentosService.update(id, updateDto, req.user);
-    }
-    remove(id, req) {
-        return this.agendamentosService.remove(id, req.user);
+    async update(agendamentoId, req, updateAgendamentoDto) {
+        return this.agendamentosService.update(agendamentoId, req.user.clinicaId, updateAgendamentoDto);
     }
 };
 exports.AgendamentosController = AgendamentosController;
 __decorate([
     (0, common_1.Post)(),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    (0, roles_decorator_1.Roles)(client_1.NomePapel.ADMINISTRADOR, client_1.NomePapel.ENFERMEIRO, client_1.NomePapel.ATENDENTE),
+    (0, roles_decorator_1.Roles)(client_1.NomePapel.ADMINISTRADOR, client_1.NomePapel.COORDENADOR, client_1.NomePapel.ATENDENTE),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Request)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [create_agendamento_dto_1.CreateAgendamentoDto, Object]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], AgendamentosController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)(),
-    (0, roles_decorator_1.Roles)(client_1.NomePapel.ADMINISTRADOR, client_1.NomePapel.ENFERMEIRO, client_1.NomePapel.TECNICO, client_1.NomePapel.MEDICO, client_1.NomePapel.ATENDENTE),
+    (0, roles_decorator_1.Roles)(client_1.NomePapel.ADMINISTRADOR, client_1.NomePapel.COORDENADOR, client_1.NomePapel.ATENDENTE, client_1.NomePapel.MEDICO),
     __param(0, (0, common_1.Query)()),
     __param(1, (0, common_1.Request)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [query_agendamento_dto_1.QueryAgendamentoDto, Object]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], AgendamentosController.prototype, "findAll", null);
 __decorate([
-    (0, common_1.Get)(':id'),
-    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
-    __param(1, (0, common_1.Request)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, Object]),
-    __metadata("design:returntype", void 0)
-], AgendamentosController.prototype, "findOne", null);
-__decorate([
     (0, common_1.Patch)(':id'),
-    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
-    __param(1, (0, common_1.Body)()),
-    __param(2, (0, common_1.Request)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, update_agendamento_dto_1.UpdateAgendamentoDto, Object]),
-    __metadata("design:returntype", void 0)
-], AgendamentosController.prototype, "update", null);
-__decorate([
-    (0, common_1.Delete)(':id'),
+    (0, roles_decorator_1.Roles)(client_1.NomePapel.ADMINISTRADOR, client_1.NomePapel.COORDENADOR, client_1.NomePapel.ATENDENTE),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __param(1, (0, common_1.Request)()),
+    __param(2, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, Object]),
-    __metadata("design:returntype", void 0)
-], AgendamentosController.prototype, "remove", null);
+    __metadata("design:paramtypes", [Number, Object, update_agendamento_dto_1.UpdateAgendamentoDto]),
+    __metadata("design:returntype", Promise)
+], AgendamentosController.prototype, "update", null);
 exports.AgendamentosController = AgendamentosController = __decorate([
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, common_1.Controller)('agendamentos'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     __metadata("design:paramtypes", [agendamentos_service_1.AgendamentosService])
 ], AgendamentosController);
 //# sourceMappingURL=agendamentos.controller.js.map

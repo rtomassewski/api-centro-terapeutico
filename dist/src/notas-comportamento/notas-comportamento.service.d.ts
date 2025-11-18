@@ -12,8 +12,8 @@ export declare class NotasComportamentoService {
         id: number;
         clinicaId: number;
         pacienteId: number;
-        nota: import("@prisma/client").$Enums.RatingComportamento;
         observacao: string | null;
+        nota: import("@prisma/client").$Enums.RatingComportamento;
         data_registro: Date;
         usuarioRegistrouId: number;
     }>;
@@ -25,8 +25,8 @@ export declare class NotasComportamentoService {
         id: number;
         clinicaId: number;
         pacienteId: number;
-        nota: import("@prisma/client").$Enums.RatingComportamento;
         observacao: string | null;
+        nota: import("@prisma/client").$Enums.RatingComportamento;
         data_registro: Date;
         usuarioRegistrouId: number;
     })[]>;
@@ -34,8 +34,8 @@ export declare class NotasComportamentoService {
         id: number;
         clinicaId: number;
         pacienteId: number;
-        nota: import("@prisma/client").$Enums.RatingComportamento;
         observacao: string | null;
+        nota: import("@prisma/client").$Enums.RatingComportamento;
         data_registro: Date;
         usuarioRegistrouId: number;
     }>;
@@ -43,8 +43,8 @@ export declare class NotasComportamentoService {
         id: number;
         clinicaId: number;
         pacienteId: number;
-        nota: import("@prisma/client").$Enums.RatingComportamento;
         observacao: string | null;
+        nota: import("@prisma/client").$Enums.RatingComportamento;
         data_registro: Date;
         usuarioRegistrouId: number;
     }>;
@@ -52,8 +52,8 @@ export declare class NotasComportamentoService {
         id: number;
         clinicaId: number;
         pacienteId: number;
-        nota: import("@prisma/client").$Enums.RatingComportamento;
         observacao: string | null;
+        nota: import("@prisma/client").$Enums.RatingComportamento;
         data_registro: Date;
         usuarioRegistrouId: number;
     }>;
