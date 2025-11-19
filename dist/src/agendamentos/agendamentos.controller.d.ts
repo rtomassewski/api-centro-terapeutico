@@ -6,17 +6,17 @@ export declare class AgendamentosController {
     private readonly agendamentosService;
     constructor(agendamentosService: AgendamentosService);
     create(createDto: CreateAgendamentoDto, req: any): Promise<{
-        data_hora_inicio: Date;
-        data_hora_fim: Date;
-        status: import("@prisma/client").$Enums.StatusAgendamento;
-        notas: string | null;
-        observacao: string | null;
-        createdAt: Date;
-        updatedAt: Date;
-        id: number;
-        clinicaId: number;
         pacienteId: number;
         usuarioId: number;
+        data_hora_inicio: Date;
+        observacao: string | null;
+        status: import("@prisma/client").$Enums.StatusAgendamento;
+        id: number;
+        data_hora_fim: Date;
+        notas: string | null;
+        clinicaId: number;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
     findAll(query: QueryAgendamentoDto, req: any): Promise<({
         paciente: {
@@ -27,17 +27,17 @@ export declare class AgendamentosController {
             nome_completo: string;
         };
     } & {
-        data_hora_inicio: Date;
-        data_hora_fim: Date;
-        status: import("@prisma/client").$Enums.StatusAgendamento;
-        notas: string | null;
-        observacao: string | null;
-        createdAt: Date;
-        updatedAt: Date;
-        id: number;
-        clinicaId: number;
         pacienteId: number;
         usuarioId: number;
+        data_hora_inicio: Date;
+        observacao: string | null;
+        status: import("@prisma/client").$Enums.StatusAgendamento;
+        id: number;
+        data_hora_fim: Date;
+        notas: string | null;
+        clinicaId: number;
+        createdAt: Date;
+        updatedAt: Date;
     })[]>;
     update(agendamentoId: number, req: any, updateAgendamentoDto: UpdateAgendamentoDto): Promise<{
         paciente: {
@@ -47,16 +47,16 @@ export declare class AgendamentosController {
             nome_completo: string;
         };
     } & {
-        data_hora_inicio: Date;
-        data_hora_fim: Date;
-        status: import("@prisma/client").$Enums.StatusAgendamento;
-        notas: string | null;
-        observacao: string | null;
-        createdAt: Date;
-        updatedAt: Date;
-        id: number;
-        clinicaId: number;
         pacienteId: number;
         usuarioId: number;
+        data_hora_inicio: Date;
+        observacao: string | null;
+        status: import("@prisma/client").$Enums.StatusAgendamento;
+        id: number;
+        data_hora_fim: Date;
+        notas: string | null;
+        clinicaId: number;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
 }

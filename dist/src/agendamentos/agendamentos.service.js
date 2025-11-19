@@ -72,14 +72,15 @@ let AgendamentosService = class AgendamentosService {
         const { data_hora_inicio, status, ...rest } = updateAgendamentoDto;
         const data = { ...rest };
         if (data_hora_inicio) {
-            data.data_hora_inicio = new Date(data_hora_inicio);
+            const novaData = new Date(data_hora_inicio);
+            data.data_hora_inicio = novaData;
+            data.data_hora_fim = new Date(novaData.getTime() + 60 * 60 * 1000);
         }
         if (status) {
             data.status = status;
         }
-        delete data.data_hora_fim;
         return this.prisma.agendamento.update({
-            where: { id: agendamentoId, clinicaId },
+            where: { id: agendamentoId },
             data: data,
             include: {
                 paciente: { select: { nome_completo: true } },

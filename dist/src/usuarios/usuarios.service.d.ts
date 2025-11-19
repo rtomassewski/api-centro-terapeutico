@@ -10,8 +10,8 @@ export declare class UsuariosService {
         id: number;
         nome_completo: string;
         email: string;
-        papelId: number;
         ativo: boolean;
+        papelId: number;
         createdAt: Date;
     }>;
     findAll(usuarioLogado: Usuario): Promise<{
@@ -37,21 +37,21 @@ export declare class UsuariosService {
         id: number;
         nome_completo: string;
         email: string;
-        papelId: number;
         ativo: boolean;
+        papelId: number;
     }>;
     remove(id: number, usuarioLogado: Usuario): Promise<{
         id: number;
         nome_completo: string;
         email: string;
-        papelId: number;
-        clinicaId: number;
+        senha_hash: string;
         registro_conselho: string | null;
         ativo: boolean;
-        assinatura_url: string | null;
-        senha_hash: string;
+        papelId: number;
+        clinicaId: number;
         createdAt: Date;
         updatedAt: Date;
+        assinatura_url: string | null;
     }>;
     findByEmail(email: string): Promise<({
         papel: {
@@ -72,24 +72,24 @@ export declare class UsuariosService {
             createdAt: Date;
             updatedAt: Date;
             ativa: boolean;
-            nome_fantasia: string;
             cnpj: string;
             razao_social: string;
-            logo_url: string | null;
+            nome_fantasia: string;
             endereco: string | null;
+            logo_url: string | null;
             telefone: string | null;
         };
     } & {
         id: number;
         nome_completo: string;
         email: string;
-        papelId: number;
-        clinicaId: number;
+        senha_hash: string;
         registro_conselho: string | null;
         ativo: boolean;
-        assinatura_url: string | null;
-        senha_hash: string;
+        papelId: number;
+        clinicaId: number;
         createdAt: Date;
         updatedAt: Date;
+        assinatura_url: string | null;
     }) | null>;
 }

@@ -30,23 +30,23 @@ export declare class JwtStrategy extends JwtStrategy_base {
             createdAt: Date;
             updatedAt: Date;
             ativa: boolean;
-            nome_fantasia: string;
             cnpj: string;
             razao_social: string;
-            logo_url: string | null;
+            nome_fantasia: string;
             endereco: string | null;
+            logo_url: string | null;
             telefone: string | null;
         };
         id: number;
         nome_completo: string;
         email: string;
-        papelId: number;
-        clinicaId: number;
         registro_conselho: string | null;
         ativo: boolean;
-        assinatura_url: string | null;
+        papelId: number;
+        clinicaId: number;
         createdAt: Date;
         updatedAt: Date;
+        assinatura_url: string | null;
     }>;
 }
 export {};

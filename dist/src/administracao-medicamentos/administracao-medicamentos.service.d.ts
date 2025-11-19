@@ -14,10 +14,10 @@ export declare class AdministracaoMedicamentosService {
         status: import("@prisma/client").$Enums.StatusAdministracao;
         pacienteId: number;
         notas: string | null;
-        data_hora_prevista: Date;
-        prescricaoId: number;
         usuarioAdministrouId: number | null;
+        data_hora_prevista: Date;
         data_hora_administracao: Date | null;
+        prescricaoId: number;
     }>;
     administrar(id: number, dto: AdministrarMedicamentoDto, usuarioLogado: Usuario): Promise<{
         administracao: {
@@ -26,10 +26,10 @@ export declare class AdministracaoMedicamentosService {
             status: import("@prisma/client").$Enums.StatusAdministracao;
             pacienteId: number;
             notas: string | null;
-            data_hora_prevista: Date;
-            prescricaoId: number;
             usuarioAdministrouId: number | null;
+            data_hora_prevista: Date;
             data_hora_administracao: Date | null;
+            prescricaoId: number;
         };
         saida_estoque: {
             id: number;
@@ -63,10 +63,10 @@ export declare class AdministracaoMedicamentosService {
         status: import("@prisma/client").$Enums.StatusAdministracao;
         pacienteId: number;
         notas: string | null;
-        data_hora_prevista: Date;
-        prescricaoId: number;
         usuarioAdministrouId: number | null;
+        data_hora_prevista: Date;
         data_hora_administracao: Date | null;
+        prescricaoId: number;
     })[]>;
     findOne(id: number, usuarioLogado: Usuario): Promise<({
         paciente: {
@@ -88,9 +88,9 @@ export declare class AdministracaoMedicamentosService {
         status: import("@prisma/client").$Enums.StatusAdministracao;
         pacienteId: number;
         notas: string | null;
-        data_hora_prevista: Date;
-        prescricaoId: number;
         usuarioAdministrouId: number | null;
+        data_hora_prevista: Date;
         data_hora_administracao: Date | null;
+        prescricaoId: number;
     }) | null>;
 }

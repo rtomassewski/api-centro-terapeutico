@@ -6,8 +6,8 @@ export declare class LicencasController {
     findAll(): import("@prisma/client").Prisma.PrismaPromise<({
         clinica: {
             id: number;
-            nome_fantasia: string;
             cnpj: string;
+            nome_fantasia: string;
         };
     } & {
         id: number;
@@ -22,11 +22,11 @@ export declare class LicencasController {
             createdAt: Date;
             updatedAt: Date;
             ativa: boolean;
-            nome_fantasia: string;
             cnpj: string;
             razao_social: string;
-            logo_url: string | null;
+            nome_fantasia: string;
             endereco: string | null;
+            logo_url: string | null;
             telefone: string | null;
         };
     } & {

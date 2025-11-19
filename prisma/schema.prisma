@@ -1,29 +1,326 @@
-// Este é o seu arquivo de schema do Prisma.
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL") // Pega a URL do arquivo .env
+  url      = env("DATABASE_URL")
 }
 
-// --- ENUMs (Tipos pré-definidos) ---
-
-enum StatusAtendimento {
-  AGUARDANDO
-  ATENDIDO
-  CANCELADO
-  DESISTENCIA
-  REAGENDADO
-  NAO_COMPARECEU
+model HistoricoMedico {
+  id                        Int          @id @default(autoincrement())
+  pacienteId                Int
+  clinicaId                 Int
+  usuarioPreencheuId        Int
+  data_preenchimento        DateTime     @default(now())
+  alergias                  String?
+  condicoes_previas         String?
+  medicamentos_uso_continuo String?
+  historico_familiar        String?
+  historico_social          String?
+  historico_uso_substancias String?
+  createdAt                 DateTime     @default(now())
+  updatedAt                 DateTime     @updatedAt
+  tipo                      TipoEvolucao @default(GERAL)
+  clinica                   Clinica      @relation(fields: [clinicaId], references: [id])
+  paciente                  Paciente     @relation(fields: [pacienteId], references: [id])
+  usuario_preencheu         Usuario      @relation(fields: [usuarioPreencheuId], references: [id])
 }
-// Enum para o tipo de evolução (Sigilo)
+
+model Papel {
+  id        Int       @id @default(autoincrement())
+  nome      NomePapel @unique
+  descricao String?
+  usuarios  Usuario[]
+}
+
+model Usuario {
+  id                              Int                        @id @default(autoincrement())
+  nome_completo                   String
+  email                           String                     @unique
+  senha_hash                      String
+  registro_conselho               String?
+  ativo                           Boolean                    @default(true)
+  papelId                         Int
+  clinicaId                       Int
+  createdAt                       DateTime                   @default(now())
+  updatedAt                       DateTime                   @updatedAt
+  assinatura_url                  String?
+  administracoes_feitas           AdministracaoMedicamento[] @relation("UsuarioAdministrou")
+  agendamentos                    Agendamento[]
+  entradas_estoque_registradas    EntradaEstoque[]
+  evolucoes                       Evolucao[]
+  historicos_preenchidos          HistoricoMedico[]
+  notas_comportamento_registradas NotaComportamento[]
+  prescricoes                     Prescricao[]
+  saidas_estoque_registradas      SaidaEstoque[]
+  sinais_vitais_aferidos          SinalVital[]
+  clinica                         Clinica                    @relation(fields: [clinicaId], references: [id])
+  papel                           Papel                      @relation(fields: [papelId], references: [id])
+}
+
+model Paciente {
+  id                          Int                        @id @default(autoincrement())
+  nome_completo               String
+  nome_social                 String?
+  data_nascimento             DateTime
+  cpf                         String
+  nome_responsavel            String
+  telefone_responsavel        String
+  data_admissao               DateTime                   @default(now())
+  status                      StatusPaciente             @default(ATIVO)
+  clinicaId                   Int
+  administracoes_medicamentos AdministracaoMedicamento[]
+  agendamentos                Agendamento[]
+  evolucoes                   Evolucao[]
+  historicos_medicos          HistoricoMedico[]
+  leito                       Leito?
+  notas_comportamento         NotaComportamento[]
+  clinica                     Clinica                    @relation(fields: [clinicaId], references: [id])
+  prescricoes                 Prescricao[]
+  sinais_vitais               SinalVital[]
+  transacoes_financeiras      TransacaoFinanceira[]
+
+  @@unique([cpf, clinicaId])
+}
+
+model Evolucao {
+  id            Int          @id @default(autoincrement())
+  descricao     String
+  data_evolucao DateTime     @default(now())
+  usuarioId     Int
+  pacienteId    Int
+  createdAt     DateTime     @default(now())
+  tipo          TipoEvolucao @default(GERAL)
+  paciente      Paciente     @relation(fields: [pacienteId], references: [id])
+  usuario       Usuario      @relation(fields: [usuarioId], references: [id])
+}
+
+model Prescricao {
+  id                  Int                        @id @default(autoincrement())
+  produtoId           Int
+  quantidade_por_dose Int                        @default(1)
+  dosagem             String?
+  posologia           String
+  data_prescricao     DateTime                   @default(now())
+  ativa               Boolean                    @default(true)
+  pacienteId          Int
+  usuarioId           Int
+  createdAt           DateTime                   @default(now())
+  administracoes      AdministracaoMedicamento[]
+  paciente            Paciente                   @relation(fields: [pacienteId], references: [id])
+  produto             Produto                    @relation(fields: [produtoId], references: [id])
+  usuario             Usuario                    @relation(fields: [usuarioId], references: [id])
+}
+
+model Clinica {
+  id                          Int                        @id @default(autoincrement())
+  razao_social                String
+  nome_fantasia               String
+  cnpj                        String                     @unique
+  ativa                       Boolean                    @default(true)
+  createdAt                   DateTime                   @default(now())
+  updatedAt                   DateTime                   @updatedAt
+  endereco                    String?
+  logo_url                    String?
+  telefone                    String?
+  administracoes_medicamentos AdministracaoMedicamento[]
+  agendamentos                Agendamento[]
+  alas                        Ala[]
+  categorias_financeiras      CategoriaFinanceira[]
+  entradas_estoque            EntradaEstoque[]
+  historicos_medicos          HistoricoMedico[]
+  leitos                      Leito[]
+  licenca                     Licenca?
+  notas_comportamento         NotaComportamento[]
+  pacientes                   Paciente[]
+  produtos                    Produto[]
+  quartos                     Quarto[]
+  saidas_estoque              SaidaEstoque[]
+  sinais_vitais               SinalVital[]
+  transacoes_financeiras      TransacaoFinanceira[]
+  usuarios                    Usuario[]
+}
+
+model Licenca {
+  id             Int           @id @default(autoincrement())
+  plano          TipoPlano     @default(BASICO)
+  status         StatusLicenca @default(TESTE)
+  data_expiracao DateTime
+  clinicaId      Int           @unique
+  clinica        Clinica       @relation(fields: [clinicaId], references: [id])
+}
+
+model CategoriaFinanceira {
+  id         Int                   @id @default(autoincrement())
+  nome       String
+  tipo       TipoTransacao
+  clinicaId  Int
+  clinica    Clinica               @relation(fields: [clinicaId], references: [id])
+  transacoes TransacaoFinanceira[]
+}
+
+model TransacaoFinanceira {
+  id              Int                 @id @default(autoincrement())
+  descricao       String
+  valor           Float
+  tipo            TipoTransacao
+  data_vencimento DateTime
+  data_pagamento  DateTime?
+  clinicaId       Int
+  categoriaId     Int
+  pacienteId      Int?
+  categoria       CategoriaFinanceira @relation(fields: [categoriaId], references: [id])
+  clinica         Clinica             @relation(fields: [clinicaId], references: [id])
+  paciente        Paciente?           @relation(fields: [pacienteId], references: [id])
+}
+
+model Agendamento {
+  id               Int               @id @default(autoincrement())
+  data_hora_inicio DateTime
+  data_hora_fim    DateTime
+  status           StatusAgendamento @default(AGENDADO)
+  notas            String?
+  clinicaId        Int
+  pacienteId       Int
+  usuarioId        Int
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  observacao       String?
+  clinica          Clinica           @relation(fields: [clinicaId], references: [id])
+  paciente         Paciente          @relation(fields: [pacienteId], references: [id])
+  usuario          Usuario           @relation(fields: [usuarioId], references: [id])
+}
+
+model AdministracaoMedicamento {
+  id                      Int                 @id @default(autoincrement())
+  data_hora_prevista      DateTime
+  data_hora_administracao DateTime?
+  status                  StatusAdministracao @default(PENDENTE)
+  notas                   String?
+  clinicaId               Int
+  pacienteId              Int
+  prescricaoId            Int
+  usuarioAdministrouId    Int?
+  clinica                 Clinica             @relation(fields: [clinicaId], references: [id])
+  paciente                Paciente            @relation(fields: [pacienteId], references: [id])
+  prescricao              Prescricao          @relation(fields: [prescricaoId], references: [id])
+  usuario_administrou     Usuario?            @relation("UsuarioAdministrou", fields: [usuarioAdministrouId], references: [id])
+  saida_estoque           SaidaEstoque?
+}
+
+model SinalVital {
+  id                      Int      @id @default(autoincrement())
+  data_hora_afericao      DateTime @default(now())
+  pressao_arterial        String?
+  frequencia_cardiaca     Int?
+  frequencia_respiratoria Int?
+  temperatura             Float?
+  saturacao_oxigenio      Int?
+  glicemia                Int?
+  dor                     Int?
+  notas                   String?
+  clinicaId               Int
+  pacienteId              Int
+  usuarioAferiuId         Int
+  createdAt               DateTime @default(now())
+  clinica                 Clinica  @relation(fields: [clinicaId], references: [id])
+  paciente                Paciente @relation(fields: [pacienteId], references: [id])
+  usuario_aferiu          Usuario  @relation(fields: [usuarioAferiuId], references: [id])
+}
+
+model Produto {
+  id                 Int              @id @default(autoincrement())
+  nome               String
+  descricao          String?
+  unidade_medida     UnidadeMedida    @default(UNIDADE)
+  quantidade_estoque Int              @default(0)
+  estoque_minimo     Int              @default(0)
+  clinicaId          Int
+  entradas           EntradaEstoque[]
+  prescricoes        Prescricao[]
+  clinica            Clinica          @relation(fields: [clinicaId], references: [id])
+  saidas             SaidaEstoque[]
+}
+
+model EntradaEstoque {
+  id                Int       @id @default(autoincrement())
+  quantidade        Int
+  data_entrada      DateTime  @default(now())
+  lote              String?
+  data_validade     DateTime?
+  produtoId         Int
+  usuarioId         Int
+  clinicaId         Int
+  clinica           Clinica   @relation(fields: [clinicaId], references: [id])
+  produto           Produto   @relation(fields: [produtoId], references: [id])
+  usuario_registrou Usuario   @relation(fields: [usuarioId], references: [id])
+}
+
+model SaidaEstoque {
+  id                Int                       @id @default(autoincrement())
+  quantidade        Int
+  data_saida        DateTime                  @default(now())
+  motivo            String?
+  produtoId         Int
+  usuarioId         Int
+  clinicaId         Int
+  administracaoId   Int?                      @unique
+  administracao     AdministracaoMedicamento? @relation(fields: [administracaoId], references: [id])
+  clinica           Clinica                   @relation(fields: [clinicaId], references: [id])
+  produto           Produto                   @relation(fields: [produtoId], references: [id])
+  usuario_registrou Usuario                   @relation(fields: [usuarioId], references: [id])
+}
+
+model Ala {
+  id        Int      @id @default(autoincrement())
+  nome      String
+  descricao String?
+  clinicaId Int
+  clinica   Clinica  @relation(fields: [clinicaId], references: [id])
+  quartos   Quarto[]
+}
+
+model Quarto {
+  id        Int     @id @default(autoincrement())
+  nome      String
+  descricao String?
+  alaId     Int
+  clinicaId Int
+  leitos    Leito[]
+  ala       Ala     @relation(fields: [alaId], references: [id])
+  clinica   Clinica @relation(fields: [clinicaId], references: [id])
+}
+
+model Leito {
+  id         Int         @id @default(autoincrement())
+  nome       String
+  status     StatusLeito @default(DISPONIVEL)
+  quartoId   Int
+  clinicaId  Int
+  pacienteId Int?        @unique
+  clinica    Clinica     @relation(fields: [clinicaId], references: [id])
+  paciente   Paciente?   @relation(fields: [pacienteId], references: [id])
+  quarto     Quarto      @relation(fields: [quartoId], references: [id])
+}
+
+model NotaComportamento {
+  id                 Int                 @id @default(autoincrement())
+  data_registro      DateTime            @default(now())
+  nota               RatingComportamento
+  observacao         String?
+  clinicaId          Int
+  pacienteId         Int
+  usuarioRegistrouId Int
+  clinica            Clinica             @relation(fields: [clinicaId], references: [id])
+  paciente           Paciente            @relation(fields: [pacienteId], references: [id])
+  usuario_registrou  Usuario             @relation(fields: [usuarioRegistrouId], references: [id])
+}
+
 enum TipoEvolucao {
-  GERAL        // Todos podem ver (Enfermagem, Médico, etc.)
-  PSICOLOGICA  // Apenas Psicólogos podem ver
-  TERAPEUTICA  // Apenas Terapeutas podem ver
+  GERAL
+  PSICOLOGICA
+  TERAPEUTICA
 }
 
 enum RatingComportamento {
@@ -33,7 +330,6 @@ enum RatingComportamento {
   PESSIMO
 }
 
-// Enum para o status do Leito
 enum StatusLeito {
   DISPONIVEL
   OCUPADO
@@ -41,23 +337,20 @@ enum StatusLeito {
   MANUTENCAO
 }
 
-// Enum para as unidades de medida do estoque
 enum UnidadeMedida {
-  UNIDADE   // Unidade (ex: comprimido, seringa)
+  UNIDADE
   CAIXA
   FRASCO
   ML
 }
 
-// Enum para o status da administração do medicamento
 enum StatusAdministracao {
-  PENDENTE     // Agendado pela enfermeira, ainda não administrado
-  ADMINISTRADO // O técnico/enfermeiro deu o remédio
-  RECUSADO     // O paciente recusou
-  NAO_ADMINISTRADO // Ex: Paciente dormindo, medicação em falta, etc.
+  PENDENTE
+  ADMINISTRADO
+  RECUSADO
+  NAO_ADMINISTRADO
 }
 
-// Define os papéis fixos do sistema
 enum NomePapel {
   ADMINISTRADOR
   MEDICO
@@ -69,28 +362,24 @@ enum NomePapel {
   ATENDENTE
 }
 
-// Define os status possíveis de um paciente
 enum StatusPaciente {
   ATIVO
   ALTA
   EVADIDO
 }
 
-// Enum para o tipo de categoria/transação
 enum TipoTransacao {
-  RECEITA // Dinheiro entrando
-  DESPESA // Dinheiro saindo
+  RECEITA
+  DESPESA
 }
 
-// Enum para os tipos de plano que você vende
 enum TipoPlano {
-  TESTE  
+  TESTE
   BASICO
   PRO
   ENTERPRISE
 }
 
-// Enum para o status da licença
 enum StatusLicenca {
   ATIVA
   INADIMPLENTE
@@ -98,466 +387,11 @@ enum StatusLicenca {
   TESTE
 }
 
-// Enum para o status do agendamento
 enum StatusAgendamento {
   AGENDADO
-  REALIZADO // Paciente compareceu
-  CANCELADO // Cancelado (pela clínica ou paciente)
-  FALTOU // Paciente não compareceu (no-show)
+  REALIZADO
+  CANCELADO
+  FALTOU
 }
 
-// --- MODELOS (Tabelas do Banco) ---
-// --- MODELO DO MÓDULO DE HISTÓRICO MÉDICO (ANAMNESE) ---
-
-model HistoricoMedico {
-  id        Int       @id @default(autoincrement())
-
-  // 1. Vínculos
-  paciente  Paciente  @relation(fields: [pacienteId], references: [id])
-  pacienteId Int
-
-  // --- MUDANÇA 1: REMOVER O '@unique' ---
-  // (Um paciente agora pode ter vários históricos)
-
-  clinica   Clinica   @relation(fields: [clinicaId], references: [id])
-  clinicaId Int
-
-  // --- MUDANÇA 2: ADICIONAR O 'tipo' ---
-  tipo      TipoEvolucao @default(GERAL) // (Reutilizando o Enum que já criamos)
-
-  // 2. Auditoria
-  usuario_preencheu   Usuario   @relation(fields: [usuarioPreencheuId], references: [id])
-  usuarioPreencheuId  Int
-  data_preenchimento  DateTime  @default(now())
-
-  // 3. Campos de Texto do Histórico
-  alergias            String?   @db.Text
-  condicoes_previas   String?   @db.Text
-  medicamentos_uso_continuo String? @db.Text
-  historico_familiar    String?   @db.Text
-  historico_social      String?   @db.Text
-  historico_uso_substancias String? @db.Text
-
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
-}
-
-model Papel {
-  id        Int         @id @default(autoincrement())
-  nome      NomePapel   @unique // Garante que só existe um papel "MEDICO"
-  descricao String?
-  usuarios  Usuario[] // Relação: Um Papel pode ter vários Usuários
-}
-
-model Usuario {
-  id                Int         @id @default(autoincrement())
-  nome_completo     String
-  email             String      @unique
-  senha_hash        String
-  registro_conselho String?
-  ativo             Boolean     @default(true)
-  assinatura_url    String?   // URL para a imagem da assinatura
-  
-  papel             Papel       @relation(fields: [papelId], references: [id])
-  papelId           Int
-
-  // --- NOVA LINHA (RELAÇÃO) ---
-  // O Usuário pertence a UMA Clínica
-  clinica           Clinica     @relation(fields: [clinicaId], references: [id])
-  clinicaId         Int
-  // --- FIM DA NOVA LINHA ---
-
-  evolucoes         Evolucao[]
-  prescricoes       Prescricao[]
-  agendamentos      Agendamento[]
-  sinais_vitais_aferidos SinalVital[]
-  entradas_estoque_registradas EntradaEstoque[]
-  saidas_estoque_registradas   SaidaEstoque[]
-  historicos_preenchidos HistoricoMedico[]
-  notas_comportamento_registradas NotaComportamento[]
-
-  // --- LINHA CORRIGIDA ---
-  // O @relation foi movido para o final da linha.
-  administracoes_feitas AdministracaoMedicamento[] @relation("UsuarioAdministrou")
-
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
-}
-
-model Paciente {
-  id                 Int            @id @default(autoincrement())
-  nome_completo      String
-  nome_social        String?
-  data_nascimento    DateTime
-  
-  cpf                String // Corrigido (sem @unique aqui)
-  
-  nome_responsavel   String
-  telefone_responsavel String
-  data_admissao      DateTime       @default(now())
-  status             StatusPaciente @default(ATIVO)
-
-  // Relações
-  clinica            Clinica        @relation(fields: [clinicaId], references: [id])
-  clinicaId          Int
-  leito              Leito?
-  historicos_medicos HistoricoMedico[]
-  evolucoes          Evolucao[]
-  prescricoes        Prescricao[]
-  sinais_vitais      SinalVital[]
-  agendamentos       Agendamento[]
-  notas_comportamento NotaComportamento[]
-  transacoes_financeiras TransacaoFinanceira[]
-
-  // --- A LINHA QUE FALTAVA ---
-  administracoes_medicamentos AdministracaoMedicamento[]
-  // --- FIM DA CORREÇÃO ---
-
-  // O índice único (da última etapa)
-  @@unique([cpf, clinicaId])
-}
-
-model Evolucao {
-  id          Int      @id @default(autoincrement())
-  descricao   String   @db.Text // Permite textos longos
-  data_evolucao DateTime @default(now())
-
-  tipo        TipoEvolucao @default(GERAL)
-
-  // Relação: A Evolução foi escrita por UM Usuário (profissional)
-  usuario     Usuario  @relation(fields: [usuarioId], references: [id])
-  usuarioId   Int
-
-  // Relação: A Evolução é sobre UM Paciente
-  paciente    Paciente @relation(fields: [pacienteId], references: [id])
-  pacienteId  Int
-
-  createdAt   DateTime @default(now())
-}
-model Prescricao {
-  id              Int      @id @default(autoincrement())
-
-  // --- MUDANÇA CRÍTICA ---
-  // O 'medicamento' em texto foi substituído por um link a um 'Produto'
-  produto         Produto  @relation(fields: [produtoId], references: [id])
-  produtoId       Int
-
-  // Quantas unidades do 'produto' são dadas por dose
-  // Ex: 1 (comprimido), 10 (ml)
-  quantidade_por_dose Int  @default(1)
-
-  dosagem         String?  // Campo de texto (ex: "50mg", "10ml")
-  posologia       String   @db.Text // Instruções (ex: "A cada 8 horas")
-  data_prescricao DateTime @default(now())
-  ativa           Boolean  @default(true) // Para suspender a prescrição
-
-  // Relação: A Prescrição é sobre UM Paciente
-  paciente        Paciente @relation(fields: [pacienteId], references: [id])
-  pacienteId      Int
-
-  // Relação: A Prescrição foi feita por UM Usuário (Médico)
-  usuario         Usuario  @relation(fields: [usuarioId], references: [id])
-  usuarioId       Int
-
-  administracoes AdministracaoMedicamento[]
-
-  createdAt       DateTime @default(now())
-}
-// --- NOVOS MODELOS SAAS ---
-
-model Clinica {
-  id           Int      @id @default(autoincrement())
-  razao_social String
-  nome_fantasia String
-  cnpj         String   @unique // CNPJ do seu cliente
-  ativa        Boolean  @default(true)
-  logo_url     String?   // URL para a imagem do logo
-  endereco     String?   @db.Text
-  telefone     String?
-  
-  // Relações:
-  // Uma Clínica tem UMA Licença
-  licenca      Licenca?
-  // Uma Clínica tem VÁRIOS Usuários (profissionais)
-  usuarios     Usuario[]
-  // Uma Clínica tem VÁRIOS Pacientes
-  pacientes    Paciente[]
-  categorias_financeiras CategoriaFinanceira[]
-  transacoes_financeiras TransacaoFinanceira[]
-  administracoes_medicamentos AdministracaoMedicamento[]
-
-  agendamentos Agendamento[]
-  sinais_vitais SinalVital[]
-  produtos          Produto[]
-  entradas_estoque  EntradaEstoque[]
-  saidas_estoque    SaidaEstoque[]
-  alas    Ala[]
-  quartos Quarto[]
-  leitos  Leito[]
-  historicos_medicos HistoricoMedico[]
-  notas_comportamento NotaComportamento[]
-
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-}
-
-model Licenca {
-  id             Int           @id @default(autoincrement())
-  plano          TipoPlano     @default(BASICO)
-  status         StatusLicenca @default(TESTE)
-  data_expiracao DateTime
-
-  // Relação: A Licença pertence a UMA Clínica
-  clinica        Clinica       @relation(fields: [clinicaId], references: [id])
-  clinicaId      Int           @unique // Garante que 1 Clínica só tem 1 Licença
-}
-
-// --- MODELOS DO FINANCEIRO INTERNO (ERP) ---
-
-model CategoriaFinanceira {
-  id        Int           @id @default(autoincrement())
-  nome      String        // ex: "Mensalidade", "Aluguel", "Salários"
-  tipo      TipoTransacao // É uma categoria de RECEITA ou DESPESA
-
-  // Relação: A Categoria pertence a UMA Clínica
-  clinica   Clinica       @relation(fields: [clinicaId], references: [id])
-  clinicaId Int
-
-  // Relação: Uma Categoria pode estar em várias Transações
-  transacoes TransacaoFinanceira[]
-}
-
-model TransacaoFinanceira {
-  id              Int           @id @default(autoincrement())
-  descricao       String        // ex: "Mensalidade Março - Paciente José"
-  valor           Float         // O valor (Ex: 1500.00)
-  tipo            TipoTransacao // RECEITA ou DESPESA
-  data_vencimento DateTime      // Data que deve ser paga/recebida
-  data_pagamento  DateTime?     // Data que FOI paga (se nulo, está pendente)
-
-  // Relação: A Transação pertence a UMA Clínica
-  clinica         Clinica       @relation(fields: [clinicaId], references: [id])
-  clinicaId       Int
-
-  // Relação: A Transação pertence a UMA Categoria
-  categoria       CategoriaFinanceira @relation(fields: [categoriaId], references: [id])
-  categoriaId     Int
-
-  // Relação: A Transação PODE estar ligada a um Paciente
-  // (Útil para saber quem está devendo)
-  paciente        Paciente?     @relation(fields: [pacienteId], references: [id])
-  pacienteId      Int?
-}
-
-// --- MODELO DO MÓDULO DE AGENDAMENTOS ---
-
-model Agendamento {
-  id               Int               @id @default(autoincrement())
-  data_hora_inicio DateTime          // Ex: "2025-11-10T14:00:00Z"
-  data_hora_fim    DateTime          // Ex: "2025-11-10T15:00:00Z"
-  status           StatusAgendamento @default(AGENDADO)
-  notas            String?           @db.Text // Observações sobre a consulta
-
-  // Relação: O Agendamento pertence a UMA Clínica
-  clinica          Clinica           @relation(fields: [clinicaId], references: [id])
-  clinicaId        Int
-
-  // Relação: O Agendamento é de UM Paciente
-  paciente         Paciente          @relation(fields: [pacienteId], references: [id])
-  pacienteId       Int
-
-  observacao       String?
-
-  // Relação: O Agendamento é com UM Profissional (Usuário)
-  usuario          Usuario           @relation(fields: [usuarioId], references: [id])
-  usuarioId        Int
-
-
-
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-}
-// --- MODELO DO MÓDULO DE APRAZAMENTO (ENFERMAGEM) ---
-
-model AdministracaoMedicamento {
-  id                       Int                 @id @default(autoincrement())
-  data_hora_prevista       DateTime            // O horário que a enfermeira agendou
-  data_hora_administracao  DateTime?           // O horário exato que o técnico administrou
-  status                   StatusAdministracao @default(PENDENTE)
-  notas                    String?             @db.Text // Ex: "Paciente recusou", "Administrado com suco"
-
-  // Relação: A que clínica pertence
-  clinica                  Clinica             @relation(fields: [clinicaId], references: [id])
-  clinicaId                Int
-
-  // Relação: A que paciente se refere
-  paciente                 Paciente            @relation(fields: [pacienteId], references: [id])
-  pacienteId               Int
-
-  // Relação: Baseado em qual prescrição médica
-  prescricao               Prescricao          @relation(fields: [prescricaoId], references: [id])
-  prescricaoId             Int
-
-  // Relação: Qual usuário (enfermeiro/técnico) ADMINISTROU
-  // É opcional (?) porque só é preenchido na hora da administração,
-  // não na hora do agendamento (aprazamento).
-  usuario_administrou      Usuario?            @relation("UsuarioAdministrou", fields: [usuarioAdministrouId], references: [id])
-  usuarioAdministrouId     Int?
-
-  saida_estoque   SaidaEstoque?
-}
-// --- MODELO DO MÓDULO DE SINAIS VITAIS ---
-
-model SinalVital {
-  id                        Int       @id @default(autoincrement())
-  data_hora_afericao        DateTime  @default(now()) // Data e hora da medição
-
-  pressao_arterial          String?   // Ex: "120/80"
-  frequencia_cardiaca       Int?      // BPM (Batimentos por Minuto)
-  frequencia_respiratoria   Int?      // RPM (Respirações por Minuto)
-  temperatura               Float?    // Ex: 36.5 (Celsius)
-  saturacao_oxigenio        Int?      // SpO2 (%)
-  glicemia                  Int?      // mg/dL
-  dor                       Int?      // Escala de 0 a 10
-  notas                     String?   @db.Text
-
-  // Relações de Segurança e Auditoria
-  clinica                   Clinica   @relation(fields: [clinicaId], references: [id])
-  clinicaId                 Int
-
-  paciente                  Paciente  @relation(fields: [pacienteId], references: [id])
-  pacienteId                Int
-
-  usuario_aferiu            Usuario   @relation(fields: [usuarioAferiuId], references: [id])
-  usuarioAferiuId           Int       // Quem mediu (Técnico/Enfermeiro)
-
-  createdAt                 DateTime  @default(now())
-}
-
-// --- MODELOS DO MÓDULO DE ESTOQUE (FARMÁCIA) ---
-
-model Produto {
-  id                 Int      @id @default(autoincrement())
-  nome               String   // Ex: "Sertralina 50mg (Caixa 30cp)"
-  descricao          String?
-  unidade_medida     UnidadeMedida @default(UNIDADE)
-
-  // O estoque "virtual" atual.
-  // Será atualizado por transações (Entradas/Saídas)
-  quantidade_estoque Int      @default(0)
-
-  // Alerta de estoque baixo
-  estoque_minimo     Int      @default(0) 
-
-  // Relações
-  clinica            Clinica   @relation(fields: [clinicaId], references: [id])
-  clinicaId          Int
-
-  entradas           EntradaEstoque[]
-  saidas             SaidaEstoque[]
-  prescricoes Prescricao[]
-}
-
-// Registro de quando o estoque ENTRA (Compras)
-model EntradaEstoque {
-  id            Int       @id @default(autoincrement())
-  quantidade    Int       // Quantos entraram
-  data_entrada  DateTime  @default(now())
-  lote          String?   // Número do Lote (Crítico para farmácia)
-  data_validade DateTime? // Data de Validade
-
-  // Relações
-  produto         Produto   @relation(fields: [produtoId], references: [id])
-  produtoId       Int
-
-  usuario_registrou Usuario   @relation(fields: [usuarioId], references: [id])
-  usuarioId         Int       // Quem registrou a entrada
-
-  clinica         Clinica   @relation(fields: [clinicaId], references: [id])
-  clinicaId       Int
-}
-
-// Registro de quando o estoque SAI (Uso pela enfermagem)
-model SaidaEstoque {
-  id          Int       @id @default(autoincrement())
-  quantidade  Int       // Quantos saíram
-  data_saida  DateTime  @default(now())
-  motivo      String?   // Ex: "Administração", "Perda", "Ajuste"
-
-  // Relações
-  produto         Produto   @relation(fields: [produtoId], references: [id])
-  produtoId       Int
-
-  usuario_registrou Usuario   @relation(fields: [usuarioId], references: [id])
-  usuarioId         Int       // Quem registrou a saída (o técnico)
-
-  clinica         Clinica   @relation(fields: [clinicaId], references: [id])
-  clinicaId       Int
-
-  // Ligação com a Enfermagem (A CAUSA da saída)
-  // Esta saída foi causada por qual administração de medicamento?
-  administracao   AdministracaoMedicamento? @relation(fields: [administracaoId], references: [id])
-  administracaoId Int? @unique // 1-para-1: Uma administração só pode ter uma saída
-}
-// --- MODELOS DO MÓDULO DE INTERNAÇÃO (LEITOS) ---
-
-model Ala {
-  id        Int       @id @default(autoincrement())
-  nome      String    // Ex: "Ala Masculina A"
-  descricao String?
-
-  // Relações
-  clinica   Clinica   @relation(fields: [clinicaId], references: [id])
-  clinicaId Int
-  quartos   Quarto[]
-}
-
-model Quarto {
-  id        Int       @id @default(autoincrement())
-  nome      String    // Ex: "Quarto 101"
-  descricao String?
-
-  // Relações
-  ala       Ala       @relation(fields: [alaId], references: [id])
-  alaId     Int
-  clinica   Clinica   @relation(fields: [clinicaId], references: [id])
-  clinicaId Int
-  leitos    Leito[]
-}
-
-model Leito {
-  id        Int         @id @default(autoincrement())
-  nome      String      // Ex: "Leito A", "101A"
-  status    StatusLeito @default(DISPONIVEL)
-
-  // Relações
-  quarto    Quarto    @relation(fields: [quartoId], references: [id])
-  quartoId  Int
-  clinica   Clinica   @relation(fields: [clinicaId], references: [id])
-  clinicaId Int
-
-  // Vínculo com o Paciente
-  // Um Leito só pode ter UM Paciente (relação 1-para-1 opcional)
-  paciente  Paciente? @relation(fields: [pacienteId], references: [id])
-  pacienteId Int?      @unique // Garante que o paciente só está em 1 leito
-}
-// --- MODELO DO MÓDULO DE NOTAS DE COMPORTAMENTO ---
-
-model NotaComportamento {
-  id            Int                 @id @default(autoincrement())
-  data_registro DateTime            @default(now())
-
-  nota          RatingComportamento // OTIMO, BOM, RUIM, PESSIMO
-  observacao    String?             @db.Text // Texto do Coordenador
-
-  // Relações de Segurança e Auditoria
-  clinica           Clinica             @relation(fields: [clinicaId], references: [id])
-  clinicaId         Int
-
-  paciente          Paciente            @relation(fields: [pacienteId], references: [id])
-  pacienteId        Int
-
-  usuario_registrou Usuario             @relation(fields: [usuarioRegistrouId], references: [id])
-  usuarioRegistrouId Int                // Quem registrou (Coordenador)
-}
 

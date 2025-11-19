@@ -16,12 +16,12 @@ export declare class PrescricoesService {
         id: number;
         createdAt: Date;
         pacienteId: number;
-        produtoId: number;
         quantidade_por_dose: number;
         dosagem: string | null;
         posologia: string;
         data_prescricao: Date;
         ativa: boolean;
+        produtoId: number;
         usuarioId: number;
     }>;
     findAllByPaciente(pacienteId: number, usuarioLogado: Usuario): Promise<({
@@ -35,12 +35,12 @@ export declare class PrescricoesService {
         id: number;
         createdAt: Date;
         pacienteId: number;
-        produtoId: number;
         quantidade_por_dose: number;
         dosagem: string | null;
         posologia: string;
         data_prescricao: Date;
         ativa: boolean;
+        produtoId: number;
         usuarioId: number;
     })[]>;
 }

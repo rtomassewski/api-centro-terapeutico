@@ -86,14 +86,14 @@ export declare class PacientesController {
         updatedAt: Date;
         pacienteId: number;
         tipo: import("@prisma/client").$Enums.TipoEvolucao;
+        usuarioPreencheuId: number;
+        data_preenchimento: Date;
         alergias: string | null;
         condicoes_previas: string | null;
         medicamentos_uso_continuo: string | null;
         historico_familiar: string | null;
         historico_social: string | null;
         historico_uso_substancias: string | null;
-        usuarioPreencheuId: number;
-        data_preenchimento: Date;
     }>;
     getHistorico(pacienteId: number, req: any): Promise<({
         usuario_preencheu: {
@@ -106,14 +106,14 @@ export declare class PacientesController {
         updatedAt: Date;
         pacienteId: number;
         tipo: import("@prisma/client").$Enums.TipoEvolucao;
+        usuarioPreencheuId: number;
+        data_preenchimento: Date;
         alergias: string | null;
         condicoes_previas: string | null;
         medicamentos_uso_continuo: string | null;
         historico_familiar: string | null;
         historico_social: string | null;
         historico_uso_substancias: string | null;
-        usuarioPreencheuId: number;
-        data_preenchimento: Date;
     })[]>;
     updateHistorico(pacienteId: number, dto: UpdateHistoricoMedicoDto, req: any): Promise<{
         id: number;
@@ -122,14 +122,14 @@ export declare class PacientesController {
         updatedAt: Date;
         pacienteId: number;
         tipo: import("@prisma/client").$Enums.TipoEvolucao;
+        usuarioPreencheuId: number;
+        data_preenchimento: Date;
         alergias: string | null;
         condicoes_previas: string | null;
         medicamentos_uso_continuo: string | null;
         historico_familiar: string | null;
         historico_social: string | null;
         historico_uso_substancias: string | null;
-        usuarioPreencheuId: number;
-        data_preenchimento: Date;
     }>;
     createEvolucao(pacienteId: number, dto: CreateEvolucaoDto, req: any): Promise<{
         usuario: {
@@ -174,12 +174,12 @@ export declare class PacientesController {
         id: number;
         createdAt: Date;
         pacienteId: number;
-        produtoId: number;
         quantidade_por_dose: number;
         dosagem: string | null;
         posologia: string;
         data_prescricao: Date;
         ativa: boolean;
+        produtoId: number;
         usuarioId: number;
     }>;
     findPrescricoes(pacienteId: number, req: any): Promise<({
@@ -193,12 +193,12 @@ export declare class PacientesController {
         id: number;
         createdAt: Date;
         pacienteId: number;
-        produtoId: number;
         quantidade_por_dose: number;
         dosagem: string | null;
         posologia: string;
         data_prescricao: Date;
         ativa: boolean;
+        produtoId: number;
         usuarioId: number;
     })[]>;
 }

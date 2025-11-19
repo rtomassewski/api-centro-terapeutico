@@ -81,30 +81,32 @@ export class AgendamentosService {
 
   async update(agendamentoId: number, clinicaId: number, updateAgendamentoDto: UpdateAgendamentoDto) {
     
+    // 1. Valida se o agendamento existe e pertence à clínica (Segurança)
     await this.getAgendamento(agendamentoId, clinicaId);
     
-    // Resolve TS2339/TS2322: 'data_hora' não existe, deve ser 'data_hora_inicio'.
+    // 2. Separa os dados
     const { data_hora_inicio, status, ...rest } = updateAgendamentoDto; 
     
+    // Copia observação e outros campos simples
     const data: any = { ...rest };
 
-    // Conversão de Data/Hora (Se for alterada)
+    // 3. Lógica de Data (Se for alterada)
     if (data_hora_inicio) {
-        data.data_hora_inicio = new Date(data_hora_inicio); // <-- CORRIGIDO
+        const novaData = new Date(data_hora_inicio);
+        data.data_hora_inicio = novaData;
+        // Recalcula o fim (1 hora depois)
+        data.data_hora_fim = new Date(novaData.getTime() + 60 * 60 * 1000); 
     }
     
-    // Adiciona Status (Se for alterado)
+    // 4. Lógica de Status
     if (status) {
-        // Resolve TS2322: Garante que o status é atribuído corretamente
-        data.status = status as StatusAgendamento; 
+        data.status = status as StatusAgendamento;
     }
-    
-    // Remove o campo de data de fim do DTO, se existir
-    delete data.data_hora_fim; 
 
     // 5. Executa a atualização
     return this.prisma.agendamento.update({
-      where: { id: agendamentoId, clinicaId },
+      // CORREÇÃO PRINCIPAL: O 'where' só pode ter o ID
+      where: { id: agendamentoId }, 
       data: data,
       include: { 
         paciente: { select: { nome_completo: true } },

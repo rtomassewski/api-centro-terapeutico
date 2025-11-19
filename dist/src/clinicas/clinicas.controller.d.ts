@@ -9,11 +9,11 @@ export declare class ClinicasController {
         createdAt: Date;
         updatedAt: Date;
         ativa: boolean;
-        nome_fantasia: string;
         cnpj: string;
         razao_social: string;
-        logo_url: string | null;
+        nome_fantasia: string;
         endereco: string | null;
+        logo_url: string | null;
         telefone: string | null;
     }>;
     update(id: number, updateDto: UpdateClinicaDto, req: any): Promise<{
@@ -21,11 +21,11 @@ export declare class ClinicasController {
         createdAt: Date;
         updatedAt: Date;
         ativa: boolean;
-        nome_fantasia: string;
         cnpj: string;
         razao_social: string;
-        logo_url: string | null;
+        nome_fantasia: string;
         endereco: string | null;
+        logo_url: string | null;
         telefone: string | null;
     }>;
 }

@@ -8,8 +8,8 @@ export declare class UsuariosController {
         id: number;
         nome_completo: string;
         email: string;
-        papelId: number;
         ativo: boolean;
+        papelId: number;
         createdAt: Date;
     }>;
     findAll(req: any): Promise<{
@@ -35,20 +35,20 @@ export declare class UsuariosController {
         id: number;
         nome_completo: string;
         email: string;
-        papelId: number;
         ativo: boolean;
+        papelId: number;
     }>;
     remove(id: number, req: any): Promise<{
         id: number;
         nome_completo: string;
         email: string;
-        papelId: number;
-        clinicaId: number;
+        senha_hash: string;
         registro_conselho: string | null;
         ativo: boolean;
-        assinatura_url: string | null;
-        senha_hash: string;
+        papelId: number;
+        clinicaId: number;
         createdAt: Date;
         updatedAt: Date;
+        assinatura_url: string | null;
     }>;
 }
