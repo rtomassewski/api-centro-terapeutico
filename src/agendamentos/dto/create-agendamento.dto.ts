@@ -1,5 +1,5 @@
 // src/agendamentos/dto/create-agendamento.dto.ts
-import { IsDateString, IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsDateString, IsInt, IsNotEmpty, IsOptional, IsString, IsArray } from 'class-validator';
 
 export class CreateAgendamentoDto {
   @IsInt()
@@ -17,4 +17,9 @@ export class CreateAgendamentoDto {
   @IsString()
   @IsOptional()
   observacao?: string; // <-- CORRIGIDO: Adicionado o campo que faltava
+
+  @IsArray()
+  @IsOptional()
+  @IsInt({ each: true }) // Valida se cada item da lista é um número
+  procedimentoIds?: number[];
 }

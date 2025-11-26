@@ -1,24 +1,69 @@
 import { PrismaService } from '../prisma.service';
-import { Usuario } from '@prisma/client';
 import { CreateAgendamentoDto } from './dto/create-agendamento.dto';
 import { UpdateAgendamentoDto } from './dto/update-agendamento.dto';
 import { QueryAgendamentoDto } from './dto/query-agendamento.dto';
+import { Usuario } from '@prisma/client';
 export declare class AgendamentosService {
     private prisma;
     constructor(prisma: PrismaService);
-    private getAgendamento;
     private validarPrestador;
-    create(dto: CreateAgendamentoDto, usuarioLogado: Usuario): Promise<{
+    getAgendamento(id: number, clinicaId: number): Promise<{
+        procedimentos: ({
+            procedimento: {
+                id: number;
+                ativo: boolean;
+                clinicaId: number;
+                nome: string;
+                descricao: string | null;
+                valor: number;
+            };
+        } & {
+            agendamentoId: number;
+            procedimentoId: number;
+            valor_cobrado: number;
+        })[];
+    } & {
+        pacienteId: number;
+        usuarioId: number;
         id: number;
         clinicaId: number;
         createdAt: Date;
         updatedAt: Date;
+        data_hora_inicio: Date;
+        data_hora_fim: Date;
         status: import("@prisma/client").$Enums.StatusAgendamento;
+        observacao: string | null;
+        valor_total: number | null;
+        pago: boolean;
+        forma_pagamento: import("@prisma/client").$Enums.FormaPagamento | null;
+        transacaoFinanceiraId: number | null;
+    }>;
+    create(dto: CreateAgendamentoDto, usuarioLogado: Usuario): Promise<{
+        procedimentos: ({
+            procedimento: {
+                id: number;
+                ativo: boolean;
+                clinicaId: number;
+                nome: string;
+                descricao: string | null;
+                valor: number;
+            };
+        } & {
+            agendamentoId: number;
+            procedimentoId: number;
+            valor_cobrado: number;
+        })[];
+    } & {
         pacienteId: number;
         usuarioId: number;
+        id: number;
+        clinicaId: number;
+        createdAt: Date;
+        updatedAt: Date;
         data_hora_inicio: Date;
-        observacao: string | null;
         data_hora_fim: Date;
+        status: import("@prisma/client").$Enums.StatusAgendamento;
+        observacao: string | null;
         valor_total: number | null;
         pago: boolean;
         forma_pagamento: import("@prisma/client").$Enums.FormaPagamento | null;
@@ -32,17 +77,27 @@ export declare class AgendamentosService {
             id: number;
             nome_completo: string;
         };
+        procedimentos: ({
+            procedimento: {
+                nome: string;
+                valor: number;
+            };
+        } & {
+            agendamentoId: number;
+            procedimentoId: number;
+            valor_cobrado: number;
+        })[];
     } & {
+        pacienteId: number;
+        usuarioId: number;
         id: number;
         clinicaId: number;
         createdAt: Date;
         updatedAt: Date;
-        status: import("@prisma/client").$Enums.StatusAgendamento;
-        pacienteId: number;
-        usuarioId: number;
         data_hora_inicio: Date;
-        observacao: string | null;
         data_hora_fim: Date;
+        status: import("@prisma/client").$Enums.StatusAgendamento;
+        observacao: string | null;
         valor_total: number | null;
         pago: boolean;
         forma_pagamento: import("@prisma/client").$Enums.FormaPagamento | null;
@@ -55,17 +110,47 @@ export declare class AgendamentosService {
         paciente: {
             nome_completo: string;
         };
+        procedimentos: ({
+            procedimento: {
+                id: number;
+                ativo: boolean;
+                clinicaId: number;
+                nome: string;
+                descricao: string | null;
+                valor: number;
+            };
+        } & {
+            agendamentoId: number;
+            procedimentoId: number;
+            valor_cobrado: number;
+        })[];
     } & {
+        pacienteId: number;
+        usuarioId: number;
         id: number;
         clinicaId: number;
         createdAt: Date;
         updatedAt: Date;
+        data_hora_inicio: Date;
+        data_hora_fim: Date;
         status: import("@prisma/client").$Enums.StatusAgendamento;
+        observacao: string | null;
+        valor_total: number | null;
+        pago: boolean;
+        forma_pagamento: import("@prisma/client").$Enums.FormaPagamento | null;
+        transacaoFinanceiraId: number | null;
+    }>;
+    remove(id: number, clinicaId: number): Promise<{
         pacienteId: number;
         usuarioId: number;
+        id: number;
+        clinicaId: number;
+        createdAt: Date;
+        updatedAt: Date;
         data_hora_inicio: Date;
-        observacao: string | null;
         data_hora_fim: Date;
+        status: import("@prisma/client").$Enums.StatusAgendamento;
+        observacao: string | null;
         valor_total: number | null;
         pago: boolean;
         forma_pagamento: import("@prisma/client").$Enums.FormaPagamento | null;

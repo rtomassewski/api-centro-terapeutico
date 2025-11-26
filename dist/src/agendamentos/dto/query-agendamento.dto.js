@@ -13,6 +13,8 @@ exports.QueryAgendamentoDto = void 0;
 const class_validator_1 = require("class-validator");
 class QueryAgendamentoDto {
     date;
+    pacienteId;
+    usuarioId;
 }
 exports.QueryAgendamentoDto = QueryAgendamentoDto;
 __decorate([
@@ -20,4 +22,14 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], QueryAgendamentoDto.prototype, "date", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], QueryAgendamentoDto.prototype, "pacienteId", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], QueryAgendamentoDto.prototype, "usuarioId", void 0);
 //# sourceMappingURL=query-agendamento.dto.js.map

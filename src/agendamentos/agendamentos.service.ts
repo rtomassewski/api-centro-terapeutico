@@ -1,117 +1,189 @@
-// src/agendamentos/agendamentos.service.ts
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
-import { Prisma, Usuario, StatusAgendamento } from '@prisma/client'; 
 import { CreateAgendamentoDto } from './dto/create-agendamento.dto';
 import { UpdateAgendamentoDto } from './dto/update-agendamento.dto';
 import { QueryAgendamentoDto } from './dto/query-agendamento.dto';
+import { Usuario, StatusAgendamento, Prisma } from '@prisma/client';
 
 @Injectable()
 export class AgendamentosService {
   constructor(private prisma: PrismaService) {}
 
-  // --- Helpers de Segurança ---
-  private async getAgendamento(agendamentoId: number, clinicaId: number) {
-    const agendamento = await this.prisma.agendamento.findFirst({
-      where: { id: agendamentoId, clinicaId },
+  // --- HELPER: Validar Prestador ---
+  private async validarPrestador(usuarioId: number, clinicaId: number) {
+    const prestador = await this.prisma.usuario.findFirst({
+      where: {
+        id: usuarioId,
+        clinicaId: clinicaId,
+        ativo: true,
+      },
+      include: { papel: true },
     });
-    if (!agendamento) {
-      throw new NotFoundException('Agendamento não encontrado.');
+
+    if (!prestador) {
+      throw new BadRequestException('Prestador não encontrado ou inativo.');
     }
+    
+    // Lista de papéis permitidos para atender (Médico, Dentista, etc.)
+    // Ajuste conforme os nomes exatos no seu banco
+    const papeisPermitidos = ['MEDICO', 'DENTISTA', 'PSICOLOGO', 'TERAPEUTA', 'ENFERMEIRO'];
+    
+    if (!papeisPermitidos.includes(prestador.papel.nome)) {
+       throw new BadRequestException(`O usuário selecionado (${prestador.papel.nome}) não pode realizar atendimentos.`);
+    }
+  }
+
+  // --- HELPER: Buscar Um Agendamento (Com Segurança) ---
+  async getAgendamento(id: number, clinicaId: number) {
+    const agendamento = await this.prisma.agendamento.findFirst({
+      where: { id, clinicaId },
+      include: {
+        procedimentos: { include: { procedimento: true } }
+      }
+    });
+
+    if (!agendamento) {
+      throw new NotFoundException(`Agendamento #${id} não encontrado.`);
+    }
+
     return agendamento;
   }
-  
-  private async validarPrestador(prestadorId: number, clinicaId: number): Promise<void> {
-    const prestador = await this.prisma.usuario.findFirst({
-      where: { id: prestadorId, clinicaId: clinicaId, ativo: true },
-    });
-    if (!prestador) {
-      throw new NotFoundException('Prestador não encontrado ou inativo.');
-    }
-  }
 
-  // --- MÉTODOS DE CRIAÇÃO/BUSCA ---
-
+  // --- CREATE (Com Procedimentos e Valor Total) ---
   async create(dto: CreateAgendamentoDto, usuarioLogado: Usuario) {
+    // 1. Valida o prestador
     await this.validarPrestador(dto.usuarioId, usuarioLogado.clinicaId);
     
-    // 1. Converte a data de início
     const dataInicio = new Date(dto.data_hora_inicio);
-    
-    // 2. CORREÇÃO: CALCULA A DATA DE FIM (Adiciona 1 hora)
-    const dataFim = new Date(dataInicio.getTime() + 60 * 60 * 1000); // Adiciona 60 minutos
+    const dataFim = new Date(dataInicio.getTime() + 60 * 60 * 1000); // 1 hora padrão
 
-    // 3. Tenta criar o agendamento
+    // 2. Lógica de Procedimentos e Valor Financeiro
+    let valorTotal = 0;
+    let createProcedimentosRelation = {}; 
+
+    if (dto.procedimentoIds && dto.procedimentoIds.length > 0) {
+      // Busca os procedimentos no banco para pegar o PREÇO REAL
+      const procedimentos = await this.prisma.procedimento.findMany({
+        where: {
+          id: { in: dto.procedimentoIds },
+          clinicaId: usuarioLogado.clinicaId,
+          ativo: true,
+        },
+      });
+
+      // Calcula total
+      valorTotal = procedimentos.reduce((acc, curr) => acc + curr.valor, 0);
+
+      // Prepara a relação para o Prisma
+      createProcedimentosRelation = {
+        create: procedimentos.map((proc) => ({
+          procedimento: { connect: { id: proc.id } },
+          valor_cobrado: proc.valor,
+        })),
+      };
+    }
+
+    // 3. Cria o Agendamento
     return this.prisma.agendamento.create({
       data: {
         pacienteId: dto.pacienteId,
         usuarioId: dto.usuarioId,
         clinicaId: usuarioLogado.clinicaId,
-        observacao: dto.observacao, 
+        observacao: dto.observacao,
         data_hora_inicio: dataInicio,
-        data_hora_fim: dataFim, // <-- A LINHA QUE FALTAVA (Agora calculada)
-        // status: AGUARDANDO (default do schema)
+        data_hora_fim: dataFim,
+        status: StatusAgendamento.AGENDADO, // Garante o status inicial
+        
+        // Novos Campos
+        valor_total: valorTotal,
+        pago: false,
+        
+        // Vincula os procedimentos
+        procedimentos: Object.keys(createProcedimentosRelation).length > 0 
+          ? createProcedimentosRelation 
+          : undefined, 
       },
+      include: {
+        procedimentos: { include: { procedimento: true } },
+      }
     });
   }
 
+  // --- FIND ALL (Com Procedimentos no Include) ---
   async findAll(query: QueryAgendamentoDto, usuarioLogado: Usuario) {
+    const { date, pacienteId, usuarioId } = query;
     const where: Prisma.AgendamentoWhereInput = {
       clinicaId: usuarioLogado.clinicaId,
     };
-    
-    // O DTO de Query usa 'date'. Onde usa, deve ser corrigido para data_hora_inicio.
-    if (query.date) { 
-        const dayStart = new Date(query.date);
-        const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000); 
-        where.data_hora_inicio = { gte: dayStart, lt: dayEnd }; // <-- CORRIGIDO
+
+    if (date) {
+      const start = new Date(date);
+      start.setUTCHours(0, 0, 0, 0);
+      const end = new Date(date);
+      end.setUTCHours(23, 59, 59, 999);
+
+      where.data_hora_inicio = {
+        gte: start,
+        lte: end,
+      };
     }
 
+    if (pacienteId) where.pacienteId = +pacienteId;
+    if (usuarioId) where.usuarioId = +usuarioId;
+
     return this.prisma.agendamento.findMany({
-      where: where,
+      where,
       include: {
-        paciente: { select: { nome_completo: true, id: true } }, // <-- CORRIGIDO nomeCompleto
+        paciente: { select: { nome_completo: true, id: true } },
         usuario: { select: { nome_completo: true } },
+        // Inclui os procedimentos na listagem
+        procedimentos: {
+           include: { procedimento: { select: { nome: true, valor: true } } }
+        },
       },
-      orderBy: { data_hora_inicio: 'asc' }, // <-- CORRIGIDO data_hora
+      orderBy: { data_hora_inicio: 'asc' },
     });
   }
 
-  // --- MÉTODO UPDATE CORRIGIDO (resolve todos os erros restantes) ---
-
+  // --- UPDATE (Corrigido para usar StatusAgendamento) ---
   async update(agendamentoId: number, clinicaId: number, updateAgendamentoDto: UpdateAgendamentoDto) {
-    
-    // 1. Valida se o agendamento existe e pertence à clínica (Segurança)
+    // 1. Valida se existe
     await this.getAgendamento(agendamentoId, clinicaId);
     
-    // 2. Separa os dados
     const { data_hora_inicio, status, ...rest } = updateAgendamentoDto; 
     
-    // Copia observação e outros campos simples
+    // Copia campos simples
     const data: any = { ...rest };
 
-    // 3. Lógica de Data (Se for alterada)
+    // Lógica de Data
     if (data_hora_inicio) {
         const novaData = new Date(data_hora_inicio);
         data.data_hora_inicio = novaData;
-        // Recalcula o fim (1 hora depois)
         data.data_hora_fim = new Date(novaData.getTime() + 60 * 60 * 1000); 
     }
     
-    // 4. Lógica de Status
+    // Lógica de Status (Tipagem Segura)
     if (status) {
-        data.status = status as StatusAgendamento;
+        data.status = status as StatusAgendamento; 
     }
 
-    // 5. Executa a atualização
+    // Executa Update
     return this.prisma.agendamento.update({
-      // CORREÇÃO PRINCIPAL: O 'where' só pode ter o ID
-      where: { id: agendamentoId }, 
+      where: { id: agendamentoId }, // Correção do erro 500 anterior
       data: data,
       include: { 
         paciente: { select: { nome_completo: true } },
-        usuario: { select: { nome_completo: true } } 
+        usuario: { select: { nome_completo: true } },
+        procedimentos: { include: { procedimento: true } }
       },
+    });
+  }
+
+  // --- REMOVE ---
+  async remove(id: number, clinicaId: number) {
+    await this.getAgendamento(id, clinicaId);
+    return this.prisma.agendamento.delete({
+      where: { id },
     });
   }
 }

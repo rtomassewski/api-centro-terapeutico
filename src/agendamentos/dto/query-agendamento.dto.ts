@@ -1,9 +1,16 @@
-// src/agendamentos/dto/query-agendamento.dto.ts
-import { IsDateString, IsOptional } from 'class-validator';
+import { IsDateString, IsOptional, IsString } from 'class-validator';
 
 export class QueryAgendamentoDto {
-  
   @IsDateString()
   @IsOptional()
-  date?: string; // <-- CORRIGIDO: O campo usado para filtrar a agenda por dia
+  date?: string;
+
+  // --- ADICIONE ESTES DOIS CAMPOS ---
+  @IsString()
+  @IsOptional()
+  pacienteId?: string; // Vem como string na URL (?pacienteId=1)
+
+  @IsString()
+  @IsOptional()
+  usuarioId?: string;  // Vem como string na URL (?usuarioId=5)
 }

@@ -3,4 +3,5 @@ export declare class CreateAgendamentoDto {
     usuarioId: number;
     data_hora_inicio: string;
     observacao?: string;
+    procedimentoIds?: number[];
 }

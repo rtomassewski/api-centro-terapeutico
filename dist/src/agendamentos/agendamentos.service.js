@@ -12,32 +12,63 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AgendamentosService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma.service");
+const client_1 = require("@prisma/client");
 let AgendamentosService = class AgendamentosService {
     prisma;
     constructor(prisma) {
         this.prisma = prisma;
     }
-    async getAgendamento(agendamentoId, clinicaId) {
-        const agendamento = await this.prisma.agendamento.findFirst({
-            where: { id: agendamentoId, clinicaId },
-        });
-        if (!agendamento) {
-            throw new common_1.NotFoundException('Agendamento não encontrado.');
-        }
-        return agendamento;
-    }
-    async validarPrestador(prestadorId, clinicaId) {
+    async validarPrestador(usuarioId, clinicaId) {
         const prestador = await this.prisma.usuario.findFirst({
-            where: { id: prestadorId, clinicaId: clinicaId, ativo: true },
+            where: {
+                id: usuarioId,
+                clinicaId: clinicaId,
+                ativo: true,
+            },
+            include: { papel: true },
         });
         if (!prestador) {
-            throw new common_1.NotFoundException('Prestador não encontrado ou inativo.');
+            throw new common_1.BadRequestException('Prestador não encontrado ou inativo.');
         }
+        const papeisPermitidos = ['MEDICO', 'DENTISTA', 'PSICOLOGO', 'TERAPEUTA', 'ENFERMEIRO'];
+        if (!papeisPermitidos.includes(prestador.papel.nome)) {
+            throw new common_1.BadRequestException(`O usuário selecionado (${prestador.papel.nome}) não pode realizar atendimentos.`);
+        }
+    }
+    async getAgendamento(id, clinicaId) {
+        const agendamento = await this.prisma.agendamento.findFirst({
+            where: { id, clinicaId },
+            include: {
+                procedimentos: { include: { procedimento: true } }
+            }
+        });
+        if (!agendamento) {
+            throw new common_1.NotFoundException(`Agendamento #${id} não encontrado.`);
+        }
+        return agendamento;
     }
     async create(dto, usuarioLogado) {
         await this.validarPrestador(dto.usuarioId, usuarioLogado.clinicaId);
         const dataInicio = new Date(dto.data_hora_inicio);
         const dataFim = new Date(dataInicio.getTime() + 60 * 60 * 1000);
+        let valorTotal = 0;
+        let createProcedimentosRelation = {};
+        if (dto.procedimentoIds && dto.procedimentoIds.length > 0) {
+            const procedimentos = await this.prisma.procedimento.findMany({
+                where: {
+                    id: { in: dto.procedimentoIds },
+                    clinicaId: usuarioLogado.clinicaId,
+                    ativo: true,
+                },
+            });
+            valorTotal = procedimentos.reduce((acc, curr) => acc + curr.valor, 0);
+            createProcedimentosRelation = {
+                create: procedimentos.map((proc) => ({
+                    procedimento: { connect: { id: proc.id } },
+                    valor_cobrado: proc.valor,
+                })),
+            };
+        }
         return this.prisma.agendamento.create({
             data: {
                 pacienteId: dto.pacienteId,
@@ -46,23 +77,45 @@ let AgendamentosService = class AgendamentosService {
                 observacao: dto.observacao,
                 data_hora_inicio: dataInicio,
                 data_hora_fim: dataFim,
+                status: client_1.StatusAgendamento.AGENDADO,
+                valor_total: valorTotal,
+                pago: false,
+                procedimentos: Object.keys(createProcedimentosRelation).length > 0
+                    ? createProcedimentosRelation
+                    : undefined,
             },
+            include: {
+                procedimentos: { include: { procedimento: true } },
+            }
         });
     }
     async findAll(query, usuarioLogado) {
+        const { date, pacienteId, usuarioId } = query;
         const where = {
             clinicaId: usuarioLogado.clinicaId,
         };
-        if (query.date) {
-            const dayStart = new Date(query.date);
-            const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
-            where.data_hora_inicio = { gte: dayStart, lt: dayEnd };
+        if (date) {
+            const start = new Date(date);
+            start.setUTCHours(0, 0, 0, 0);
+            const end = new Date(date);
+            end.setUTCHours(23, 59, 59, 999);
+            where.data_hora_inicio = {
+                gte: start,
+                lte: end,
+            };
         }
+        if (pacienteId)
+            where.pacienteId = +pacienteId;
+        if (usuarioId)
+            where.usuarioId = +usuarioId;
         return this.prisma.agendamento.findMany({
-            where: where,
+            where,
             include: {
                 paciente: { select: { nome_completo: true, id: true } },
                 usuario: { select: { nome_completo: true } },
+                procedimentos: {
+                    include: { procedimento: { select: { nome: true, valor: true } } }
+                },
             },
             orderBy: { data_hora_inicio: 'asc' },
         });
@@ -84,8 +137,15 @@ let AgendamentosService = class AgendamentosService {
             data: data,
             include: {
                 paciente: { select: { nome_completo: true } },
-                usuario: { select: { nome_completo: true } }
+                usuario: { select: { nome_completo: true } },
+                procedimentos: { include: { procedimento: true } }
             },
+        });
+    }
+    async remove(id, clinicaId) {
+        await this.getAgendamento(id, clinicaId);
+        return this.prisma.agendamento.delete({
+            where: { id },
         });
     }
 };
