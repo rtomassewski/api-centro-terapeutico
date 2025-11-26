@@ -11,9 +11,9 @@ export declare class EntradasEstoqueController {
             produtoId: number;
             usuarioId: number;
             quantidade: number;
-            data_entrada: Date;
             lote: string | null;
             data_validade: Date | null;
+            data_entrada: Date;
         };
         estoque_atual: number;
     }>;
@@ -30,8 +30,8 @@ export declare class EntradasEstoqueController {
         produtoId: number;
         usuarioId: number;
         quantidade: number;
-        data_entrada: Date;
         lote: string | null;
         data_validade: Date | null;
+        data_entrada: Date;
     })[]>;
 }

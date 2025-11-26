@@ -10,8 +10,8 @@ export declare class UsuariosService {
         id: number;
         nome_completo: string;
         email: string;
-        ativo: boolean;
         papelId: number;
+        ativo: boolean;
         createdAt: Date;
     }>;
     findAll(usuarioLogado: Usuario): Promise<{
@@ -37,21 +37,21 @@ export declare class UsuariosService {
         id: number;
         nome_completo: string;
         email: string;
-        ativo: boolean;
         papelId: number;
+        ativo: boolean;
     }>;
     remove(id: number, usuarioLogado: Usuario): Promise<{
         id: number;
         nome_completo: string;
         email: string;
-        senha_hash: string;
-        registro_conselho: string | null;
-        ativo: boolean;
         papelId: number;
         clinicaId: number;
+        registro_conselho: string | null;
+        ativo: boolean;
+        assinatura_url: string | null;
+        senha_hash: string;
         createdAt: Date;
         updatedAt: Date;
-        assinatura_url: string | null;
     }>;
     findByEmail(email: string): Promise<({
         papel: {
@@ -63,18 +63,18 @@ export declare class UsuariosService {
             licenca: {
                 id: number;
                 clinicaId: number;
-                status: import("@prisma/client").$Enums.StatusLicenca;
                 plano: import("@prisma/client").$Enums.TipoPlano;
+                status: import("@prisma/client").$Enums.StatusLicenca;
                 data_expiracao: Date;
             } | null;
         } & {
             id: number;
             createdAt: Date;
             updatedAt: Date;
-            ativa: boolean;
-            cnpj: string;
             razao_social: string;
             nome_fantasia: string;
+            cnpj: string;
+            ativa: boolean;
             endereco: string | null;
             logo_url: string | null;
             telefone: string | null;
@@ -83,13 +83,13 @@ export declare class UsuariosService {
         id: number;
         nome_completo: string;
         email: string;
-        senha_hash: string;
-        registro_conselho: string | null;
-        ativo: boolean;
         papelId: number;
         clinicaId: number;
+        registro_conselho: string | null;
+        ativo: boolean;
+        assinatura_url: string | null;
+        senha_hash: string;
         createdAt: Date;
         updatedAt: Date;
-        assinatura_url: string | null;
     }) | null>;
 }

@@ -11,10 +11,10 @@ export declare class AdministracaoMedicamentosController {
         status: import("@prisma/client").$Enums.StatusAdministracao;
         pacienteId: number;
         notas: string | null;
-        usuarioAdministrouId: number | null;
         data_hora_prevista: Date;
-        data_hora_administracao: Date | null;
         prescricaoId: number;
+        usuarioAdministrouId: number | null;
+        data_hora_administracao: Date | null;
     }>;
     administrar(id: number, dto: AdministrarMedicamentoDto, req: any): Promise<{
         administracao: {
@@ -23,10 +23,10 @@ export declare class AdministracaoMedicamentosController {
             status: import("@prisma/client").$Enums.StatusAdministracao;
             pacienteId: number;
             notas: string | null;
-            usuarioAdministrouId: number | null;
             data_hora_prevista: Date;
-            data_hora_administracao: Date | null;
             prescricaoId: number;
+            usuarioAdministrouId: number | null;
+            data_hora_administracao: Date | null;
         };
         saida_estoque: {
             id: number;
@@ -60,10 +60,10 @@ export declare class AdministracaoMedicamentosController {
         status: import("@prisma/client").$Enums.StatusAdministracao;
         pacienteId: number;
         notas: string | null;
-        usuarioAdministrouId: number | null;
         data_hora_prevista: Date;
-        data_hora_administracao: Date | null;
         prescricaoId: number;
+        usuarioAdministrouId: number | null;
+        data_hora_administracao: Date | null;
     })[]>;
     findOne(id: number, req: any): Promise<({
         paciente: {
@@ -85,9 +85,9 @@ export declare class AdministracaoMedicamentosController {
         status: import("@prisma/client").$Enums.StatusAdministracao;
         pacienteId: number;
         notas: string | null;
-        usuarioAdministrouId: number | null;
         data_hora_prevista: Date;
-        data_hora_administracao: Date | null;
         prescricaoId: number;
+        usuarioAdministrouId: number | null;
+        data_hora_administracao: Date | null;
     }) | null>;
 }

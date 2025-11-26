@@ -57,6 +57,7 @@ model Usuario {
   sinais_vitais_aferidos          SinalVital[]
   clinica                         Clinica                    @relation(fields: [clinicaId], references: [id])
   papel                           Papel                      @relation(fields: [papelId], references: [id])
+  caixas_abertos Caixa[]
 }
 
 model Paciente {
@@ -140,6 +141,8 @@ model Clinica {
   sinais_vitais               SinalVital[]
   transacoes_financeiras      TransacaoFinanceira[]
   usuarios                    Usuario[]
+  procedimentos  Procedimento[]
+  caixas         Caixa[]
 }
 
 model Licenca {
@@ -173,23 +176,65 @@ model TransacaoFinanceira {
   categoria       CategoriaFinanceira @relation(fields: [categoriaId], references: [id])
   clinica         Clinica             @relation(fields: [clinicaId], references: [id])
   paciente        Paciente?           @relation(fields: [pacienteId], references: [id])
+  agendamento     Agendamento?
 }
 
 model Agendamento {
-  id               Int               @id @default(autoincrement())
+  id               Int      @id @default(autoincrement())
   data_hora_inicio DateTime
   data_hora_fim    DateTime
   status           StatusAgendamento @default(AGENDADO)
-  notas            String?
+  observacao       String?
+  
+  // Novos campos financeiros no agendamento
+  valor_total      Float?   @default(0)
+  pago             Boolean  @default(false)
+  forma_pagamento  FormaPagamento? 
+  
   clinicaId        Int
   pacienteId       Int
   usuarioId        Int
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-  observacao       String?
-  clinica          Clinica           @relation(fields: [clinicaId], references: [id])
-  paciente         Paciente          @relation(fields: [pacienteId], references: [id])
-  usuario          Usuario           @relation(fields: [usuarioId], references: [id])
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  clinica          Clinica  @relation(fields: [clinicaId], references: [id])
+  paciente         Paciente @relation(fields: [pacienteId], references: [id])
+  usuario          Usuario  @relation(fields: [usuarioId], references: [id])
+
+  // Relação com os procedimentos escolhidos
+  procedimentos    AgendamentoOnProcedimentos[]
+  
+  // Se gerou uma transação financeira (Receita)
+  transacaoFinanceiraId Int? @unique
+  transacaoFinanceira   TransacaoFinanceira? @relation(fields: [transacaoFinanceiraId], references: [id])
+}
+model AgendamentoOnProcedimentos {
+  agendamentoId  Int
+  procedimentoId Int
+  valor_cobrado  Float // O valor pode mudar na hora (desconto), então salvamos aqui também
+  
+  agendamento    Agendamento  @relation(fields: [agendamentoId], references: [id])
+  procedimento   Procedimento @relation(fields: [procedimentoId], references: [id])
+
+  @@id([agendamentoId, procedimentoId])
+}
+model Caixa {
+  id             Int       @id @default(autoincrement())
+  usuarioId      Int       // Quem abriu o caixa (Atendente)
+  clinicaId      Int
+  data_abertura  DateTime  @default(now())
+  data_fechamento DateTime?
+  saldo_inicial  Float     @default(0)
+  saldo_final    Float?    // Preenchido ao fechar
+  status         StatusCaixa @default(ABERTO)
+  observacoes    String?
+  
+  usuario        Usuario   @relation(fields: [usuarioId], references: [id])
+  clinica        Clinica   @relation(fields: [clinicaId], references: [id])
+  
+  // Movimentações deste caixa específico
+  movimentacoes  MovimentacaoCaixa[]
 }
 
 model AdministracaoMedicamento {
@@ -256,6 +301,17 @@ model EntradaEstoque {
   produto           Produto   @relation(fields: [produtoId], references: [id])
   usuario_registrou Usuario   @relation(fields: [usuarioId], references: [id])
 }
+model MovimentacaoCaixa {
+  id             Int            @id @default(autoincrement())
+  caixaId        Int
+  descricao      String
+  valor          Float
+  tipo           TipoTransacao  // RECEITA ou DESPESA (Sangria)
+  forma_pagamento FormaPagamento
+  data_hora      DateTime       @default(now())
+  
+  caixa          Caixa          @relation(fields: [caixaId], references: [id])
+}
 
 model SaidaEstoque {
   id                Int                       @id @default(autoincrement())
@@ -316,6 +372,18 @@ model NotaComportamento {
   paciente           Paciente            @relation(fields: [pacienteId], references: [id])
   usuario_registrou  Usuario             @relation(fields: [usuarioRegistrouId], references: [id])
 }
+model Procedimento {
+  id          Int      @id @default(autoincrement())
+  nome        String
+  descricao   String?
+  valor       Float    // Valor padrão
+  ativo       Boolean  @default(true)
+  clinicaId   Int
+  clinica     Clinica  @relation(fields: [clinicaId], references: [id])
+  
+  // Relação com agendamentos (Muitos para Muitos implícito ou explícito)
+  agendamentos AgendamentoOnProcedimentos[]
+}
 
 enum TipoEvolucao {
   GERAL
@@ -354,6 +422,7 @@ enum StatusAdministracao {
 enum NomePapel {
   ADMINISTRADOR
   MEDICO
+  DENTISTA
   PSICOLOGO
   ENFERMEIRO
   TERAPEUTA
@@ -392,6 +461,17 @@ enum StatusAgendamento {
   REALIZADO
   CANCELADO
   FALTOU
+}
+enum FormaPagamento {
+  DINHEIRO
+  CARTAO_CREDITO
+  CARTAO_DEBITO
+  PIX
+  CONVENIO
+}
+enum StatusCaixa {
+  ABERTO
+  FECHADO
 }
 
 

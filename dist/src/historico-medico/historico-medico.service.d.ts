@@ -12,14 +12,14 @@ export declare class HistoricoMedicoService {
         updatedAt: Date;
         pacienteId: number;
         tipo: import("@prisma/client").$Enums.TipoEvolucao;
-        usuarioPreencheuId: number;
-        data_preenchimento: Date;
         alergias: string | null;
         condicoes_previas: string | null;
         medicamentos_uso_continuo: string | null;
         historico_familiar: string | null;
         historico_social: string | null;
         historico_uso_substancias: string | null;
+        usuarioPreencheuId: number;
+        data_preenchimento: Date;
     }>;
     findAllByPacienteId(pacienteId: number, usuarioLogado: any): Promise<({
         usuario_preencheu: {
@@ -32,14 +32,14 @@ export declare class HistoricoMedicoService {
         updatedAt: Date;
         pacienteId: number;
         tipo: import("@prisma/client").$Enums.TipoEvolucao;
-        usuarioPreencheuId: number;
-        data_preenchimento: Date;
         alergias: string | null;
         condicoes_previas: string | null;
         medicamentos_uso_continuo: string | null;
         historico_familiar: string | null;
         historico_social: string | null;
         historico_uso_substancias: string | null;
+        usuarioPreencheuId: number;
+        data_preenchimento: Date;
     })[]>;
     update(historicoId: number, dto: UpdateHistoricoMedicoDto, usuarioLogado: any): Promise<{
         id: number;
@@ -48,13 +48,13 @@ export declare class HistoricoMedicoService {
         updatedAt: Date;
         pacienteId: number;
         tipo: import("@prisma/client").$Enums.TipoEvolucao;
-        usuarioPreencheuId: number;
-        data_preenchimento: Date;
         alergias: string | null;
         condicoes_previas: string | null;
         medicamentos_uso_continuo: string | null;
         historico_familiar: string | null;
         historico_social: string | null;
         historico_uso_substancias: string | null;
+        usuarioPreencheuId: number;
+        data_preenchimento: Date;
     }>;
 }

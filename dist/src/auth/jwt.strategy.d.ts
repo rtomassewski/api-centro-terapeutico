@@ -21,18 +21,18 @@ export declare class JwtStrategy extends JwtStrategy_base {
             licenca: {
                 id: number;
                 clinicaId: number;
-                status: import("@prisma/client").$Enums.StatusLicenca;
                 plano: import("@prisma/client").$Enums.TipoPlano;
+                status: import("@prisma/client").$Enums.StatusLicenca;
                 data_expiracao: Date;
             } | null;
         } & {
             id: number;
             createdAt: Date;
             updatedAt: Date;
-            ativa: boolean;
-            cnpj: string;
             razao_social: string;
             nome_fantasia: string;
+            cnpj: string;
+            ativa: boolean;
             endereco: string | null;
             logo_url: string | null;
             telefone: string | null;
@@ -40,13 +40,13 @@ export declare class JwtStrategy extends JwtStrategy_base {
         id: number;
         nome_completo: string;
         email: string;
-        registro_conselho: string | null;
-        ativo: boolean;
         papelId: number;
         clinicaId: number;
+        registro_conselho: string | null;
+        ativo: boolean;
+        assinatura_url: string | null;
         createdAt: Date;
         updatedAt: Date;
-        assinatura_url: string | null;
     }>;
 }
 export {};
