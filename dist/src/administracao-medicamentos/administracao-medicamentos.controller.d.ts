@@ -10,9 +10,9 @@ export declare class AdministracaoMedicamentosController {
         clinicaId: number;
         status: import("@prisma/client").$Enums.StatusAdministracao;
         pacienteId: number;
-        notas: string | null;
         data_hora_prevista: Date;
         prescricaoId: number;
+        notas: string | null;
         usuarioAdministrouId: number | null;
         data_hora_administracao: Date | null;
     }>;
@@ -22,9 +22,9 @@ export declare class AdministracaoMedicamentosController {
             clinicaId: number;
             status: import("@prisma/client").$Enums.StatusAdministracao;
             pacienteId: number;
-            notas: string | null;
             data_hora_prevista: Date;
             prescricaoId: number;
+            notas: string | null;
             usuarioAdministrouId: number | null;
             data_hora_administracao: Date | null;
         };
@@ -59,9 +59,9 @@ export declare class AdministracaoMedicamentosController {
         clinicaId: number;
         status: import("@prisma/client").$Enums.StatusAdministracao;
         pacienteId: number;
-        notas: string | null;
         data_hora_prevista: Date;
         prescricaoId: number;
+        notas: string | null;
         usuarioAdministrouId: number | null;
         data_hora_administracao: Date | null;
     })[]>;
@@ -84,9 +84,9 @@ export declare class AdministracaoMedicamentosController {
         clinicaId: number;
         status: import("@prisma/client").$Enums.StatusAdministracao;
         pacienteId: number;
-        notas: string | null;
         data_hora_prevista: Date;
         prescricaoId: number;
+        notas: string | null;
         usuarioAdministrouId: number | null;
         data_hora_administracao: Date | null;
     }) | null>;

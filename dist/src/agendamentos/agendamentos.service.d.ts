@@ -19,7 +19,10 @@ export declare class AgendamentosService {
         data_hora_inicio: Date;
         observacao: string | null;
         data_hora_fim: Date;
-        notas: string | null;
+        valor_total: number | null;
+        pago: boolean;
+        forma_pagamento: import("@prisma/client").$Enums.FormaPagamento | null;
+        transacaoFinanceiraId: number | null;
     }>;
     findAll(query: QueryAgendamentoDto, usuarioLogado: Usuario): Promise<({
         usuario: {
@@ -40,7 +43,10 @@ export declare class AgendamentosService {
         data_hora_inicio: Date;
         observacao: string | null;
         data_hora_fim: Date;
-        notas: string | null;
+        valor_total: number | null;
+        pago: boolean;
+        forma_pagamento: import("@prisma/client").$Enums.FormaPagamento | null;
+        transacaoFinanceiraId: number | null;
     })[]>;
     update(agendamentoId: number, clinicaId: number, updateAgendamentoDto: UpdateAgendamentoDto): Promise<{
         usuario: {
@@ -60,6 +66,9 @@ export declare class AgendamentosService {
         data_hora_inicio: Date;
         observacao: string | null;
         data_hora_fim: Date;
-        notas: string | null;
+        valor_total: number | null;
+        pago: boolean;
+        forma_pagamento: import("@prisma/client").$Enums.FormaPagamento | null;
+        transacaoFinanceiraId: number | null;
     }>;
 }

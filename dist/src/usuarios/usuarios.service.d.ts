@@ -63,18 +63,18 @@ export declare class UsuariosService {
             licenca: {
                 id: number;
                 clinicaId: number;
-                plano: import("@prisma/client").$Enums.TipoPlano;
                 status: import("@prisma/client").$Enums.StatusLicenca;
+                plano: import("@prisma/client").$Enums.TipoPlano;
                 data_expiracao: Date;
             } | null;
         } & {
             id: number;
             createdAt: Date;
             updatedAt: Date;
-            razao_social: string;
+            ativa: boolean;
             nome_fantasia: string;
             cnpj: string;
-            ativa: boolean;
+            razao_social: string;
             endereco: string | null;
             logo_url: string | null;
             telefone: string | null;

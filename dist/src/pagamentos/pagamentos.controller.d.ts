@@ -12,8 +12,8 @@ export declare class PagamentosController {
     superUpdateLicenca(licencaId: number, dto: SuperUpdateLicencaDto): Promise<{
         id: number;
         clinicaId: number;
-        plano: import("@prisma/client").$Enums.TipoPlano;
         status: import("@prisma/client").$Enums.StatusLicenca;
+        plano: import("@prisma/client").$Enums.TipoPlano;
         data_expiracao: Date;
     }>;
 }
