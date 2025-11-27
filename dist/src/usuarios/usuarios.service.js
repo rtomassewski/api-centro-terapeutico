@@ -164,6 +164,11 @@ let UsuariosService = class UsuariosService {
             },
         });
     }
+    async findAllPapeis() {
+        return this.prisma.papel.findMany({
+            orderBy: { nome: 'asc' },
+        });
+    }
 };
 exports.UsuariosService = UsuariosService;
 exports.UsuariosService = UsuariosService = __decorate([

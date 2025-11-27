@@ -29,6 +29,9 @@ let UsuariosController = class UsuariosController {
     create(createUsuarioDto) {
         return this.usuariosService.create(createUsuarioDto);
     }
+    listarPapeis() {
+        return this.usuariosService.findAllPapeis();
+    }
     findAll(req) {
         return this.usuariosService.findAll(req.user);
     }
@@ -50,6 +53,12 @@ __decorate([
     __metadata("design:paramtypes", [create_usuario_dto_1.CreateUsuarioDto]),
     __metadata("design:returntype", void 0)
 ], UsuariosController.prototype, "create", null);
+__decorate([
+    (0, common_1.Get)('papeis/todos'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], UsuariosController.prototype, "listarPapeis", null);
 __decorate([
     (0, common_1.Get)(),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),

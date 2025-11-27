@@ -49,7 +49,7 @@ __decorate([
 ], AgendamentosController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)(),
-    (0, roles_decorator_1.Roles)(client_1.NomePapel.ADMINISTRADOR, client_1.NomePapel.COORDENADOR, client_1.NomePapel.ATENDENTE, client_1.NomePapel.MEDICO),
+    (0, roles_decorator_1.Roles)(client_1.NomePapel.ADMINISTRADOR, client_1.NomePapel.COORDENADOR, client_1.NomePapel.ATENDENTE, client_1.NomePapel.MEDICO, client_1.NomePapel.DENTISTA, client_1.NomePapel.NUTRICIONISTA, client_1.NomePapel.FISIOTERAPEUTA, client_1.NomePapel.PSIQUIATRA),
     __param(0, (0, common_1.Query)()),
     __param(1, (0, common_1.Request)()),
     __metadata("design:type", Function),

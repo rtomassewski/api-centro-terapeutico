@@ -12,6 +12,11 @@ export declare class UsuariosController {
         ativo: boolean;
         createdAt: Date;
     }>;
+    listarPapeis(): Promise<{
+        nome: import("@prisma/client").$Enums.NomePapel;
+        descricao: string | null;
+        id: number;
+    }[]>;
     findAll(req: any): Promise<{
         id: number;
         papel: {

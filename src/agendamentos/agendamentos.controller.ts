@@ -29,6 +29,10 @@ export class AgendamentosController {
     NomePapel.COORDENADOR,
     NomePapel.ATENDENTE,
     NomePapel.MEDICO,
+    NomePapel.DENTISTA,
+    NomePapel.NUTRICIONISTA,
+    NomePapel.FISIOTERAPEUTA,
+    NomePapel.PSIQUIATRA,
   )
   async findAll(
     @Query() query: QueryAgendamentoDto,

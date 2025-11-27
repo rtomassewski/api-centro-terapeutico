@@ -96,7 +96,7 @@ __decorate([
 __decorate([
     (0, common_1.Get)(),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-    (0, roles_decorator_1.Roles)(client_1.NomePapel.ADMINISTRADOR, client_1.NomePapel.ENFERMEIRO, client_1.NomePapel.TECNICO, client_1.NomePapel.MEDICO, client_1.NomePapel.ATENDENTE, client_1.NomePapel.PSICOLOGO, client_1.NomePapel.TERAPEUTA, client_1.NomePapel.COORDENADOR),
+    (0, roles_decorator_1.Roles)(client_1.NomePapel.ADMINISTRADOR, client_1.NomePapel.ENFERMEIRO, client_1.NomePapel.TECNICO, client_1.NomePapel.MEDICO, client_1.NomePapel.ATENDENTE, client_1.NomePapel.PSICOLOGO, client_1.NomePapel.TERAPEUTA, client_1.NomePapel.COORDENADOR, client_1.NomePapel.DENTISTA, client_1.NomePapel.NUTRICIONISTA, client_1.NomePapel.FISIOTERAPEUTA, client_1.NomePapel.PSIQUIATRA),
     __param(0, (0, common_2.Request)()),
     __param(1, (0, common_1.Query)()),
     __metadata("design:type", Function),
@@ -106,7 +106,7 @@ __decorate([
 __decorate([
     (0, common_1.Get)(':id'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    (0, roles_decorator_1.Roles)(client_1.NomePapel.ADMINISTRADOR, client_1.NomePapel.ENFERMEIRO, client_1.NomePapel.TECNICO, client_1.NomePapel.MEDICO, client_1.NomePapel.ATENDENTE, client_1.NomePapel.PSICOLOGO, client_1.NomePapel.TERAPEUTA, client_1.NomePapel.COORDENADOR),
+    (0, roles_decorator_1.Roles)(client_1.NomePapel.ADMINISTRADOR, client_1.NomePapel.ENFERMEIRO, client_1.NomePapel.TECNICO, client_1.NomePapel.MEDICO, client_1.NomePapel.ATENDENTE, client_1.NomePapel.PSICOLOGO, client_1.NomePapel.TERAPEUTA, client_1.NomePapel.COORDENADOR, client_1.NomePapel.DENTISTA, client_1.NomePapel.NUTRICIONISTA, client_1.NomePapel.FISIOTERAPEUTA, client_1.NomePapel.PSIQUIATRA),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __param(1, (0, common_2.Request)()),
     __metadata("design:type", Function),

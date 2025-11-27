@@ -92,4 +92,9 @@ export declare class UsuariosService {
         createdAt: Date;
         updatedAt: Date;
     }) | null>;
+    findAllPapeis(): Promise<{
+        nome: import("@prisma/client").$Enums.NomePapel;
+        descricao: string | null;
+        id: number;
+    }[]>;
 }

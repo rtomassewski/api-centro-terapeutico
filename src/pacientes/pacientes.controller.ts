@@ -45,9 +45,13 @@ export class PacientesController {
     NomePapel.TECNICO,
     NomePapel.MEDICO,
     NomePapel.ATENDENTE,
-    NomePapel.PSICOLOGO, // <-- ADICIONE
+    NomePapel.PSICOLOGO,
     NomePapel.TERAPEUTA,
-    NomePapel.COORDENADOR
+    NomePapel.COORDENADOR,
+    NomePapel.DENTISTA,
+    NomePapel.NUTRICIONISTA,
+    NomePapel.FISIOTERAPEUTA,
+    NomePapel.PSIQUIATRA,
   ) 
   findAll(
     @Request() req,
@@ -67,7 +71,11 @@ export class PacientesController {
     NomePapel.ATENDENTE,
     NomePapel.PSICOLOGO, 
     NomePapel.TERAPEUTA, 
-    NomePapel.COORDENADOR
+    NomePapel.COORDENADOR,
+    NomePapel.DENTISTA,
+    NomePapel.NUTRICIONISTA,
+    NomePapel.FISIOTERAPEUTA,
+    NomePapel.PSIQUIATRA,
   )
   findOne(
     @Param('id', ParseIntPipe) pacienteId: number,
