@@ -12,8 +12,8 @@ export declare class LicencasController {
     } & {
         id: number;
         clinicaId: number;
-        status: import("@prisma/client").$Enums.StatusLicenca;
         plano: import("@prisma/client").$Enums.TipoPlano;
+        status: import("@prisma/client").$Enums.StatusLicenca;
         data_expiracao: Date;
     })[]>;
     findOne(id: number): import("@prisma/client").Prisma.Prisma__LicencaClient<({
@@ -21,10 +21,10 @@ export declare class LicencasController {
             id: number;
             createdAt: Date;
             updatedAt: Date;
-            ativa: boolean;
+            razao_social: string;
             nome_fantasia: string;
             cnpj: string;
-            razao_social: string;
+            ativa: boolean;
             endereco: string | null;
             logo_url: string | null;
             telefone: string | null;
@@ -32,15 +32,15 @@ export declare class LicencasController {
     } & {
         id: number;
         clinicaId: number;
-        status: import("@prisma/client").$Enums.StatusLicenca;
         plano: import("@prisma/client").$Enums.TipoPlano;
+        status: import("@prisma/client").$Enums.StatusLicenca;
         data_expiracao: Date;
     }) | null, null, import("@prisma/client/runtime/library").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
     update(id: number, updateLicencaDto: UpdateLicencaDto): import("@prisma/client").Prisma.Prisma__LicencaClient<{
         id: number;
         clinicaId: number;
-        status: import("@prisma/client").$Enums.StatusLicenca;
         plano: import("@prisma/client").$Enums.TipoPlano;
+        status: import("@prisma/client").$Enums.StatusLicenca;
         data_expiracao: Date;
     }, never, import("@prisma/client/runtime/library").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
 }

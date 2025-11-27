@@ -11,13 +11,32 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateEvolucaoDto = void 0;
 const class_validator_1 = require("class-validator");
+const client_1 = require("@prisma/client");
 class CreateEvolucaoDto {
     descricao;
+    pacienteId;
+    tipo;
+    agendamentoId;
 }
 exports.CreateEvolucaoDto = CreateEvolucaoDto;
 __decorate([
-    (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateEvolucaoDto.prototype, "descricao", void 0);
+__decorate([
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", Number)
+], CreateEvolucaoDto.prototype, "pacienteId", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsEnum)(client_1.TipoEvolucao),
+    __metadata("design:type", String)
+], CreateEvolucaoDto.prototype, "tipo", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsInt)(),
+    __metadata("design:type", Number)
+], CreateEvolucaoDto.prototype, "agendamentoId", void 0);
 //# sourceMappingURL=create-evolucao.dto.js.map

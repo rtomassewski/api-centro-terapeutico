@@ -6,24 +6,32 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('Iniciando o seed do banco...');
 
-  // 1. Pega todos os nomes do nosso Enum
+  // Mapa de descrições personalizadas (Opcional)
+  const descricoes: Partial<Record<NomePapel, string>> = {
+    [NomePapel.ADMINISTRADOR]: 'Acesso total ao sistema e configurações',
+    [NomePapel.MEDICO]: 'Realiza consultas, prescrições e laudos',
+    [NomePapel.DENTISTA]: 'Realiza atendimentos e procedimentos odontológicos',
+    [NomePapel.PSICOLOGO]: 'Atendimentos de saúde mental e terapia',
+    [NomePapel.ENFERMEIRO]: 'Triagem, medicação e cuidados ao paciente',
+    [NomePapel.ATENDENTE]: 'Agendamentos e cadastro de pacientes',
+    [NomePapel.PSIQUIATRA]: 'Médico especialista em saúde mental',
+    [NomePapel.COORDENADOR]: 'Gestão de equipes e escalas',
+  };
+
   const papeis = Object.values(NomePapel);
 
-  // 2. (NOVO) Usa 'upsert' para cada um
   for (const papelNome of papeis) {
+    // Se tiver descrição personalizada usa, senão usa a genérica
+    const descricaoFinal = descricoes[papelNome] || `Profissional do tipo ${papelNome}`;
+
     await prisma.papel.upsert({
-      // 2a. Onde procurar (pelo nome)
       where: { nome: papelNome },
-      
-      // 2b. O que atualizar (se encontrar)
       update: {
-        descricao: `Usuário com permissões de ${papelNome}`,
+        descricao: descricaoFinal, // Atualiza a descrição se já existir
       },
-      
-      // 2c. O que criar (se não encontrar)
       create: {
         nome: papelNome,
-        descricao: `Usuário com permissões de ${papelNome}`,
+        descricao: descricaoFinal,
       },
     });
   }

@@ -37,21 +37,38 @@ let EvolucoesService = class EvolucoesService {
         else if (papelUsuario === client_1.NomePapel.TERAPEUTA) {
             tipo = client_1.TipoEvolucao.TERAPEUTICA;
         }
-        return this.prisma.evolucao.create({
-            data: {
-                descricao: dto.descricao,
-                pacienteId: pacienteId,
-                usuarioId: usuarioLogado.id,
-                tipo: tipo,
-            },
-            include: {
-                usuario: {
-                    select: {
-                        nome_completo: true,
-                        papel: { select: { nome: true } },
+        else if (dto.tipo) {
+            tipo = dto.tipo;
+        }
+        return this.prisma.$transaction(async (tx) => {
+            const novaEvolucao = await tx.evolucao.create({
+                data: {
+                    descricao: dto.descricao,
+                    pacienteId: pacienteId,
+                    usuarioId: usuarioLogado.id,
+                    tipo: tipo,
+                },
+                include: {
+                    usuario: {
+                        select: {
+                            nome_completo: true,
+                            papel: { select: { nome: true } },
+                        },
                     },
                 },
-            },
+            });
+            if (dto.agendamentoId) {
+                const agendamento = await tx.agendamento.findFirst({
+                    where: { id: dto.agendamentoId, pacienteId: pacienteId }
+                });
+                if (agendamento) {
+                    await tx.agendamento.update({
+                        where: { id: dto.agendamentoId },
+                        data: { status: client_1.StatusAgendamento.REALIZADO },
+                    });
+                }
+            }
+            return novaEvolucao;
         });
     }
     async findAllByPaciente(pacienteId, usuarioLogado) {
@@ -68,7 +85,8 @@ let EvolucoesService = class EvolucoesService {
         }
         if (papelUsuario === client_1.NomePapel.ADMINISTRADOR ||
             papelUsuario === client_1.NomePapel.COORDENADOR ||
-            papelUsuario === client_1.NomePapel.MEDICO) {
+            papelUsuario === client_1.NomePapel.MEDICO ||
+            papelUsuario === client_1.NomePapel.PSIQUIATRA) {
             tiposVisiveis.push(client_1.TipoEvolucao.PSICOLOGICA, client_1.TipoEvolucao.TERAPEUTICA);
         }
         return this.prisma.evolucao.findMany({

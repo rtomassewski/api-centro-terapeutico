@@ -429,6 +429,9 @@ enum NomePapel {
   COORDENADOR
   TECNICO
   ATENDENTE
+  PSIQUIATRA
+  NUTRICIONISTA
+  FISIOTERAPEUTA
 }
 
 enum StatusPaciente {

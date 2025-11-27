@@ -1,10 +1,9 @@
+import { EvolucoesService } from './evolucoes.service';
 import { CreateEvolucaoDto } from './dto/create-evolucao.dto';
-import { PrismaService } from '../prisma.service';
-export declare class EvolucoesService {
-    private prisma;
-    constructor(prisma: PrismaService);
-    private validarPaciente;
-    create(dto: CreateEvolucaoDto, pacienteId: number, usuarioLogado: any): Promise<{
+export declare class EvolucoesController {
+    private readonly evolucoesService;
+    constructor(evolucoesService: EvolucoesService);
+    create(createEvolucaoDto: CreateEvolucaoDto, req: any): Promise<{
         usuario: {
             papel: {
                 nome: import("@prisma/client").$Enums.NomePapel;
@@ -20,7 +19,7 @@ export declare class EvolucoesService {
         tipo: import("@prisma/client").$Enums.TipoEvolucao;
         data_evolucao: Date;
     }>;
-    findAllByPaciente(pacienteId: number, usuarioLogado: any): Promise<({
+    findAllByPaciente(id: string, req: any): Promise<({
         usuario: {
             papel: {
                 nome: import("@prisma/client").$Enums.NomePapel;

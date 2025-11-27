@@ -30,6 +30,10 @@ export class UsuariosController {
     // 3. A chamada do service foi simplificada (sem req.user)
     return this.usuariosService.create(createUsuarioDto);
   }
+  @Get('papeis/todos')
+  listarPapeis() {
+    return this.usuariosService.findAllPapeis();
+  }
 
   // 4. OS OUTROS MÉTODOS CONTINUAM PROTEGIDOS
   @Get()

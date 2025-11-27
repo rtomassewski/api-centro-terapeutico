@@ -163,4 +163,9 @@ export class UsuariosService {
       },
     });
   }
+  async findAllPapeis() {
+    return this.prisma.papel.findMany({
+      orderBy: { nome: 'asc' }, // Ordena alfabético
+    });
+}
 }
