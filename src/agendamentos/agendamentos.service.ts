@@ -146,38 +146,74 @@ export class AgendamentosService {
   }
 
   // --- UPDATE (Corrigido para usar StatusAgendamento) ---
-  async update(agendamentoId: number, clinicaId: number, updateAgendamentoDto: UpdateAgendamentoDto) {
-    // 1. Valida se existe
-    await this.getAgendamento(agendamentoId, clinicaId);
-    
-    const { data_hora_inicio, status, ...rest } = updateAgendamentoDto; 
-    
-    // Copia campos simples
-    const data: any = { ...rest };
+ async update(id: number, updateDto: UpdateAgendamentoDto) {
+    // 1. Busca dados antigos para validar
+    const agendamentoAntigo = await this.prisma.agendamento.findUnique({
+      where: { id },
+      include: { paciente: true }
+    });
 
-    // Lógica de Data
-    if (data_hora_inicio) {
-        const novaData = new Date(data_hora_inicio);
-        data.data_hora_inicio = novaData;
-        data.data_hora_fim = new Date(novaData.getTime() + 60 * 60 * 1000); 
-    }
-    
-    // Lógica de Status (Tipagem Segura)
-    if (status) {
-        data.status = status as StatusAgendamento; 
-    }
+    if (!agendamentoAntigo) throw new Error('Agendamento não encontrado');
 
-    // Executa Update
-    return this.prisma.agendamento.update({
-      where: { id: agendamentoId }, // Correção do erro 500 anterior
-      data: data,
-      include: { 
-        paciente: { select: { nome_completo: true } },
-        usuario: { select: { nome_completo: true } },
-        procedimentos: { include: { procedimento: true } }
-      },
+    // 2. Transação atômica (tudo ou nada)
+    return await this.prisma.$transaction(async (tx) => {
+      
+      // A. Atualiza o Agendamento
+      const agendamentoAtualizado = await tx.agendamento.update({
+        where: { id },
+        data: {
+          ...updateDto, // Atualiza status, data, obs, etc.
+          // Se enviou valor_pago, atualiza.
+          valor_pago: updateDto.valor_pago !== undefined 
+            ? updateDto.valor_pago 
+            : agendamentoAntigo.valor_pago
+        },
+      });
+
+      // B. Mágica Financeira: Se marcou como PAGO agora
+      if (updateDto.pago === true && agendamentoAntigo.pago === false) {
+        
+        // B1. Tenta achar categoria "Receita de Consultas"
+        let categoria = await tx.categoriaFinanceira.findFirst({
+          where: { 
+            clinicaId: agendamentoAntigo.clinicaId,
+            tipo: 'RECEITA',
+            nome: { contains: 'Consulta', mode: 'insensitive' }
+          }
+        });
+
+        // Se não achar, pega a primeira categoria de RECEITA disponível
+        if (!categoria) {
+           categoria = await tx.categoriaFinanceira.findFirst({
+             where: { clinicaId: agendamentoAntigo.clinicaId, tipo: 'RECEITA' }
+           });
+        }
+
+        // B2. Cria a Transação Financeira
+        const novaTransacao = await tx.transacaoFinanceira.create({
+          data: {
+            descricao: `Agendamento - ${agendamentoAntigo.paciente.nome_completo}`,
+            valor: updateDto.valor_pago || agendamentoAntigo.valor_total || 0,
+            tipo: 'RECEITA',
+            data_vencimento: new Date(),
+            data_pagamento: new Date(), // Pago hoje
+            clinicaId: agendamentoAntigo.clinicaId,
+            categoriaId: categoria ? categoria.id : 0, // Ideal é ter uma categoria padrão
+            pacienteId: agendamentoAntigo.pacienteId
+          }
+        });
+
+        // B3. Vincula a transação ao agendamento
+        await tx.agendamento.update({
+          where: { id },
+          data: { transacaoFinanceiraId: novaTransacao.id }
+        });
+      }
+
+      return agendamentoAtualizado;
     });
   }
+
 
   // --- REMOVE ---
   async remove(id: number, clinicaId: number) {

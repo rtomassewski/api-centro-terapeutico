@@ -1,8 +1,0 @@
-import { ImpressoesService } from './impressoes.service';
-import type { Response } from 'express';
-export declare class ImpressoesController {
-    private readonly impressoesService;
-    constructor(impressoesService: ImpressoesService);
-    getRelatorioFinanceiro(req: any, res: Response, inicio?: string, fim?: string): Promise<void>;
-    getProntuarioPdf(pacienteId: number, req: any, res: Response): Promise<void>;
-}

@@ -190,6 +190,7 @@ model Agendamento {
   valor_total      Float?   @default(0)
   pago             Boolean  @default(false)
   forma_pagamento  FormaPagamento? 
+  valor_pago       Float?          @default(0)
   
   clinicaId        Int
   pacienteId       Int
@@ -213,6 +214,7 @@ model AgendamentoOnProcedimentos {
   agendamentoId  Int
   procedimentoId Int
   valor_cobrado  Float // O valor pode mudar na hora (desconto), então salvamos aqui também
+  
   
   agendamento    Agendamento  @relation(fields: [agendamentoId], references: [id])
   procedimento   Procedimento @relation(fields: [procedimentoId], references: [id])
