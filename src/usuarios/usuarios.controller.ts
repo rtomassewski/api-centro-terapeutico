@@ -39,7 +39,7 @@ export class UsuariosController {
   @Roles(
     NomePapel.ADMINISTRADOR, 
     NomePapel.ATENDENTE,
-    NomePapel.RECEPCIONISTA, // Caso usem nomes diferentes
+    NomePapel.ATENDENTE, // Caso usem nomes diferentes
     NomePapel.MEDICO,
     NomePapel.DENTISTA,      // <--- O que faltava
     NomePapel.PSICOLOGO,     // <--- O que faltava
