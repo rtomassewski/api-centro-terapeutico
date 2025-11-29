@@ -27,7 +27,7 @@ export class SinaisVitaisController {
   constructor(private readonly service: SinaisVitaisService) {}
 
   @Post()
-  @Roles(NomePapel.ENFERMEIRO, NomePapel.TECNICO, NomePapel.MEDICO) // Quem pode aferir
+  @Roles(NomePapel.ENFERMEIRO, NomePapel.TECNICO, NomePapel.MEDICO) // OK: Técnico pode lançar
   create(
     @Body() createDto: CreateSinalVitalDto,
     @Request() req,
@@ -36,9 +36,9 @@ export class SinaisVitaisController {
   }
 
   @Get()
-  @Roles(NomePapel.ADMINISTRADOR, NomePapel.ENFERMEIRO, NomePapel.TECNICO, NomePapel.MEDICO)
+  @Roles(NomePapel.ADMINISTRADOR, NomePapel.ENFERMEIRO, NomePapel.TECNICO, NomePapel.MEDICO) // OK: Técnico pode ver
   findAll(
-    @Query() query: QuerySinalVitalDto, // O DTO de Query
+    @Query() query: QuerySinalVitalDto,
     @Request() req,
   ) {
     return this.service.findAll(query, req.user);
@@ -51,7 +51,12 @@ export class SinaisVitaisController {
   }
 
   @Patch(':id')
-  @Roles(NomePapel.ENFERMEIRO, NomePapel.MEDICO, NomePapel.ADMINISTRADOR) // Quem pode editar
+  @Roles(
+    NomePapel.ENFERMEIRO, 
+    NomePapel.MEDICO, 
+    NomePapel.ADMINISTRADOR,
+    NomePapel.TECNICO // <--- RECOMENDADO: Adicionei aqui para ele poder corrigir erros
+  ) 
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateDto: UpdateSinalVitalDto,
@@ -61,7 +66,7 @@ export class SinaisVitaisController {
   }
 
   @Delete(':id')
-  @Roles(NomePapel.ENFERMEIRO, NomePapel.ADMINISTRADOR) // Quem pode apagar
+  @Roles(NomePapel.ENFERMEIRO, NomePapel.ADMINISTRADOR) // Mantido bloqueado para técnico (Segurança)
   remove(@Param('id', ParseIntPipe) id: number, @Request() req) {
     return this.service.remove(id, req.user);
   }

@@ -14,14 +14,13 @@ import {
 } from '@nestjs/common';
 import { AdministracaoMedicamentosService } from './administracao-medicamentos.service';
 import { CreateAdministracaoMedicamentoDto } from './dto/create-administracao-medicamento.dto';
-import { UpdateAdministracaoMedicamentoDto } from './dto/update-administracao-medicamento.dto';
 import { AdministrarMedicamentoDto } from './dto/administrar-medicamento.dto';
 import { QueryAdministracaoMedicamentoDto } from './dto/query-administracao-medicamento.dto';
 
 // --- Imports de Segurança ---
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
-import { Roles } from '../auth/roles.decorator';
+import { Roles } from '../auth/roles.decorator'; // Verifique se o caminho do decorator está correto
 import { NomePapel } from '@prisma/client';
 
 @Controller('administracao-medicamentos')
@@ -31,8 +30,10 @@ export class AdministracaoMedicamentosController {
     private readonly service: AdministracaoMedicamentosService,
   ) {}
 
+  // 1. Aprazar (Criar horário): Apenas Enfermeiro e Admin
+  // Técnico executa, mas geralmente quem planeja o horário é o Enfermeiro
   @Post()
-  @Roles(NomePapel.ADMINISTRADOR, NomePapel.ENFERMEIRO) // Apenas estes papéis podem aprazar
+  @Roles(NomePapel.ADMINISTRADOR, NomePapel.ENFERMEIRO) 
   create(
     @Body() createDto: CreateAdministracaoMedicamentoDto,
     @Request() req,
@@ -40,8 +41,13 @@ export class AdministracaoMedicamentosController {
     return this.service.create(createDto, req.user);
   }
 
-  @Patch(':id/administrar') // Rota customizada
-  @Roles(NomePapel.ENFERMEIRO, NomePapel.TECNICO) // 5. Apenas Enfermagem pode administrar
+  // 2. Administrar (Dar baixa): Técnico PODE e DEVE fazer isso
+  @Patch(':id/administrar') 
+  @Roles(
+    NomePapel.ENFERMEIRO, 
+    NomePapel.TECNICO, // <--- Isso permite o técnico dar baixa
+    NomePapel.ADMINISTRADOR
+  ) 
   administrar(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: AdministrarMedicamentoDto,
@@ -50,25 +56,27 @@ export class AdministracaoMedicamentosController {
     return this.service.administrar(id, dto, req.user);
   }
 
+  // 3. Listar (Ver a lista): Técnico PRECISA ver para saber o que fazer
   @Get()
   @Roles(
     NomePapel.ADMINISTRADOR,
     NomePapel.ENFERMEIRO,
-    NomePapel.TECNICO,
+    NomePapel.TECNICO, // <--- Isso corrige o erro 403 na listagem
     NomePapel.MEDICO,
   )
   findAll(
     @Request() req,
-    @Query() query: QueryAdministracaoMedicamentoDto, // 4. Pega os filtros
+    @Query() query: QueryAdministracaoMedicamentoDto, 
   ) {
     return this.service.findAll(query, req.user);
   }
 
+  // 4. Ver detalhes de um medicamento específico
   @Get(':id')
   @Roles(
     NomePapel.ADMINISTRADOR,
     NomePapel.ENFERMEIRO,
-    NomePapel.TECNICO,
+    NomePapel.TECNICO, // <--- Técnico também pode ver detalhes
     NomePapel.MEDICO,
   )
   findOne(
@@ -77,11 +85,4 @@ export class AdministracaoMedicamentosController {
   ) {
     return this.service.findOne(id, req.user);
   }
-/*
-  @Patch(':id')
-  update(...) { ... }
-
-  @Delete(':id')
-  remove(...) { ... }
-  */
 }
