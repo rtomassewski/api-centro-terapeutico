@@ -19,40 +19,57 @@ import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { NomePapel } from '@prisma/client';
 
-// 1. A SEGURANÇA FOI REMOVIDA DO TOPO DA CLASSE
 @Controller('usuarios')
 export class UsuariosController {
   constructor(private readonly usuariosService: UsuariosService) {}
 
-  // 2. O 'create' (POST) agora é PÚBLICO
   @Post()
   create(@Body() createUsuarioDto: CreateUsuarioDto) {
-    // 3. A chamada do service foi simplificada (sem req.user)
     return this.usuariosService.create(createUsuarioDto);
   }
+
   @Get('papeis/todos')
   listarPapeis() {
     return this.usuariosService.findAllPapeis();
   }
 
-  // 4. OS OUTROS MÉTODOS CONTINUAM PROTEGIDOS
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(NomePapel.ADMINISTRADOR, NomePapel.ATENDENTE)
+  // --- AQUI ESTÁ A CORREÇÃO: ADICIONAMOS TODO MUNDO ---
+  @Roles(
+    NomePapel.ADMINISTRADOR, 
+    NomePapel.ATENDENTE,
+    NomePapel.RECEPCIONISTA, // Caso usem nomes diferentes
+    NomePapel.MEDICO,
+    NomePapel.DENTISTA,      // <--- O que faltava
+    NomePapel.PSICOLOGO,     // <--- O que faltava
+    NomePapel.TERAPEUTA,     // <--- O que faltava
+    NomePapel.PSIQUIATRA,    // <--- O que faltava
+    NomePapel.ENFERMEIRO,    // <--- O que faltava
+    NomePapel.NUTRICIONISTA,
+    NomePapel.FISIOTERAPEUTA
+  )
+  // ---------------------------------------------------
   findAll(@Request() req) {
     return this.usuariosService.findAll(req.user);
   }
 
   @Get(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(NomePapel.ADMINISTRADOR, NomePapel.ATENDENTE)
+  @Roles(
+    NomePapel.ADMINISTRADOR, 
+    NomePapel.ATENDENTE,
+    NomePapel.DENTISTA, // Importante para o perfil
+    NomePapel.MEDICO,
+    NomePapel.PSICOLOGO
+  )
   findOne(@Param('id', ParseIntPipe) id: number, @Request() req) {
     return this.usuariosService.findOne(id, req.user);
   }
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(NomePapel.ADMINISTRADOR)
+  @Roles(NomePapel.ADMINISTRADOR) // Atualizar, só o admin ou o próprio user (logica no service)
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateUsuarioDto: UpdateUsuarioDto,
