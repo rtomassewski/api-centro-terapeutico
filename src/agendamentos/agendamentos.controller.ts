@@ -2,12 +2,12 @@
 import { Controller, Post, Body, UseGuards, Request, Get, Query, Param, ParseIntPipe, Patch, } from '@nestjs/common';
 import { AgendamentosService } from './agendamentos.service';
 import { CreateAgendamentoDto } from './dto/create-agendamento.dto';
-import { UpdateAgendamentoDto } from './dto/update-agendamento.dto'; // Importe o DTO de update
-import { QueryAgendamentoDto } from './dto/query-agendamento.dto'; // Importe o DTO de query
+import { UpdateAgendamentoDto } from './dto/update-agendamento.dto';
+import { QueryAgendamentoDto } from './dto/query-agendamento.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { RolesGuard } from '../auth/roles.guard'; // Caminho corrigido
-import { Roles } from '../auth/decorators/roles.decorator';
-import { NomePapel } from '@prisma/client'; // Importa o ENUM NomePapel
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator'; // Verifique se o caminho do seu decorator está correto aqui
+import { NomePapel } from '@prisma/client';
 
 @Controller('agendamentos')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -49,12 +49,10 @@ export class AgendamentosController {
     @Request() req,
     @Body() updateAgendamentoDto: UpdateAgendamentoDto,
   ) {
+    // CORREÇÃO: Removemos o 'req.user.clinicaId' que estava sobrando aqui no meio
     return this.agendamentosService.update(
       agendamentoId,
-      req.user.clinicaId,
       updateAgendamentoDto,
     );
   }
-
-  // (Não há necessidade de 'findOne' ou 'remove' neste controlador para o MVP)
 }
