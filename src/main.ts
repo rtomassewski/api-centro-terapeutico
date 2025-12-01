@@ -14,7 +14,11 @@ async function bootstrap() {
     forbidNonWhitelisted: true, // Lança erro se campos extras forem enviados
     transform: true, // Transforma os dados de entrada (ex: string para número)
   }));
-
+app.enableCors({
+    origin: '*', // Permite que qualquer site (seu localhost ou produção) acesse
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    credentials: true,
+  });
   await app.listen(3000);
 }
 bootstrap();
