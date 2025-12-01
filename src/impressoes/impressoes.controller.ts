@@ -14,15 +14,16 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { NomePapel } from '@prisma/client';
-import type { Response } from 'express'; // Importe o 'Response' do Express
+import type { Response } from 'express';
 
 @Controller('impressoes')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ImpressoesController {
   constructor(private readonly impressoesService: ImpressoesService) {}
 
-  @Get('paciente/:id/prontuario')
-  @Roles( // <-- CORREÇÃO: Todos os papéis clínicos podem imprimir
+  // --- ROTA 1: PRONTUÁRIO ---
+  @Get('paciente/:id/prontuario') // URL Final: /impressoes/paciente/1/prontuario
+  @Roles(
     NomePapel.MEDICO,
     NomePapel.ADMINISTRADOR,
     NomePapel.COORDENADOR,
@@ -31,15 +32,35 @@ export class ImpressoesController {
     NomePapel.TERAPEUTA,
     NomePapel.TECNICO
   )
+  async getProntuarioPdf(
+    @Param('id', ParseIntPipe) pacienteId: number,
+    @Request() req,
+    @Res() res: Response,
+  ) {
+    const pdfBuffer = await this.impressoesService.gerarProntuarioPdf(
+      pacienteId,
+      req.user,
+    );
 
-  @Get('financeiro')
-  @Roles(NomePapel.ADMINISTRADOR, NomePapel.COORDENADOR) // Apenas Gestores
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Length': pdfBuffer.length,
+      'Content-Disposition': `attachment; filename="prontuario_${pacienteId}.pdf"`,
+    });
+
+    res.end(pdfBuffer);
+  }
+
+  // --- ROTA 2: RELATÓRIO FINANCEIRO ---
+  @Get('financeiro') // URL Final: /impressoes/financeiro
+  @Roles(NomePapel.ADMINISTRADOR, NomePapel.COORDENADOR)
   async getRelatorioFinanceiro(
     @Request() req,
     @Res() res: Response,
-    @Query('inicio') inicio?: string, // Query params opcionais
+    @Query('inicio') inicio?: string,
     @Query('fim') fim?: string,
   ) {
+    // Validação básica para evitar erro se esquecer datas
     const pdfBuffer = await this.impressoesService.gerarRelatorioFinanceiro(
       req.user,
       inicio,
@@ -52,28 +73,6 @@ export class ImpressoesController {
       'Content-Disposition': `attachment; filename="relatorio_financeiro.pdf"`,
     });
 
-    res.end(pdfBuffer);
-  }
-  async getProntuarioPdf(
-    @Param('id', ParseIntPipe) pacienteId: number,
-    @Request() req,
-    @Res() res: Response,
-  ) {
-    // 1. Chama o service, que retorna um Buffer (o PDF)
-    // 2. CORREÇÃO: Passe o 'req.user' (usuarioLogado) para o serviço
-    const pdfBuffer = await this.impressoesService.gerarProntuarioPdf(
-      pacienteId,
-      req.user, // <-- PASSE O USUÁRIO LOGADO
-    );
-
-    // 3. Define os Headers da Resposta
-    res.set({
-      'Content-Type': 'application/pdf',
-      'Content-Length': pdfBuffer.length,
-      'Content-Disposition': `attachment; filename="prontuario_${pacienteId}.pdf"`,
-    });
-
-    // 4. Envia o PDF
     res.end(pdfBuffer);
   }
 }
