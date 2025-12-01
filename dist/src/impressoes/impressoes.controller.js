@@ -24,15 +24,6 @@ let ImpressoesController = class ImpressoesController {
     constructor(impressoesService) {
         this.impressoesService = impressoesService;
     }
-    async getRelatorioFinanceiro(req, res, inicio, fim) {
-        const pdfBuffer = await this.impressoesService.gerarRelatorioFinanceiro(req.user, inicio, fim);
-        res.set({
-            'Content-Type': 'application/pdf',
-            'Content-Length': pdfBuffer.length,
-            'Content-Disposition': `attachment; filename="relatorio_financeiro.pdf"`,
-        });
-        res.end(pdfBuffer);
-    }
     async getProntuarioPdf(pacienteId, req, res) {
         const pdfBuffer = await this.impressoesService.gerarProntuarioPdf(pacienteId, req.user);
         res.set({
@@ -42,11 +33,28 @@ let ImpressoesController = class ImpressoesController {
         });
         res.end(pdfBuffer);
     }
+    async getRelatorioFinanceiro(req, res, inicio, fim) {
+        const pdfBuffer = await this.impressoesService.gerarRelatorioFinanceiro(req.user, inicio, fim);
+        res.set({
+            'Content-Type': 'application/pdf',
+            'Content-Length': pdfBuffer.length,
+            'Content-Disposition': `attachment; filename="relatorio_financeiro.pdf"`,
+        });
+        res.end(pdfBuffer);
+    }
 };
 exports.ImpressoesController = ImpressoesController;
 __decorate([
     (0, common_1.Get)('paciente/:id/prontuario'),
     (0, roles_decorator_1.Roles)(client_1.NomePapel.MEDICO, client_1.NomePapel.ADMINISTRADOR, client_1.NomePapel.COORDENADOR, client_1.NomePapel.ENFERMEIRO, client_1.NomePapel.PSICOLOGO, client_1.NomePapel.TERAPEUTA, client_1.NomePapel.TECNICO),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Request)()),
+    __param(2, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Object, Object]),
+    __metadata("design:returntype", Promise)
+], ImpressoesController.prototype, "getProntuarioPdf", null);
+__decorate([
     (0, common_1.Get)('financeiro'),
     (0, roles_decorator_1.Roles)(client_1.NomePapel.ADMINISTRADOR, client_1.NomePapel.COORDENADOR),
     __param(0, (0, common_1.Request)()),
@@ -57,14 +65,6 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object, String, String]),
     __metadata("design:returntype", Promise)
 ], ImpressoesController.prototype, "getRelatorioFinanceiro", null);
-__decorate([
-    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
-    __param(1, (0, common_1.Request)()),
-    __param(2, (0, common_1.Res)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, Object, Object]),
-    __metadata("design:returntype", Promise)
-], ImpressoesController.prototype, "getProntuarioPdf", null);
 exports.ImpressoesController = ImpressoesController = __decorate([
     (0, common_1.Controller)('impressoes'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),

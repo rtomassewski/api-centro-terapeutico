@@ -52,7 +52,7 @@ __decorate([
 ], AdministracaoMedicamentosController.prototype, "create", null);
 __decorate([
     (0, common_1.Patch)(':id/administrar'),
-    (0, roles_decorator_1.Roles)(client_1.NomePapel.ENFERMEIRO, client_1.NomePapel.TECNICO),
+    (0, roles_decorator_1.Roles)(client_1.NomePapel.ENFERMEIRO, client_1.NomePapel.TECNICO, client_1.NomePapel.ADMINISTRADOR),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __param(1, (0, common_1.Body)()),
     __param(2, (0, common_1.Request)()),

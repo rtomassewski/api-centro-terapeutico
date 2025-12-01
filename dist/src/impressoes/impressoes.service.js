@@ -28,10 +28,9 @@ let ImpressoesService = class ImpressoesService {
             where: { id: pacienteId, clinicaId: clinicaId },
             include: {
                 clinica: true,
-                leito: { include: { quarto: { include: { ala: true } } } },
                 historicos_medicos: { include: { usuario_preencheu: true } },
                 evolucoes: {
-                    include: { usuario: { include: { papel: true } } },
+                    include: { usuario: true },
                     orderBy: { data_evolucao: 'desc' }
                 },
                 prescricoes: {
@@ -45,15 +44,10 @@ let ImpressoesService = class ImpressoesService {
                     include: { usuario_aferiu: true },
                     orderBy: { data_hora_afericao: 'desc' }
                 },
-                notas_comportamento: {
-                    include: { usuario_registrou: true },
-                    orderBy: { data_registro: 'desc' }
-                },
             },
         });
-        if (!paciente) {
+        if (!paciente)
             throw new common_1.NotFoundException('Paciente não encontrado');
-        }
         return paciente;
     }
     async getLogoBuffer(url) {
@@ -62,14 +56,15 @@ let ImpressoesService = class ImpressoesService {
         try {
             const response = await axios_1.default.get(url, {
                 responseType: 'arraybuffer',
+                timeout: 5000,
                 headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'
+                    'User-Agent': 'Mozilla/5.0'
                 }
             });
             return Buffer.from(response.data);
         }
         catch (error) {
-            console.error('Erro ao buscar logo (falha de rede ou URL inválido):', error.message);
+            console.log('Não foi possível baixar o logo para o PDF.');
             return null;
         }
     }
@@ -82,108 +77,79 @@ let ImpressoesService = class ImpressoesService {
         const buffers = [];
         doc.on('data', buffers.push.bind(buffers));
         const headerY = 40;
-        const headerXLogo = 160;
-        const headerXSemLogo = 50;
+        const headerXTexto = logoBuffer ? 130 : 50;
         if (logoBuffer) {
             try {
-                doc.image(logoBuffer, 50, headerY, { width: 100 });
-                doc.fontSize(18).text(clinica.nome_fantasia || '', headerXLogo, headerY + 10);
-                doc.fontSize(10).text(clinica.endereco || '', headerXLogo, headerY + 35);
-                doc.fontSize(10).text(clinica.telefone || '', headerXLogo, headerY + 50);
+                doc.image(logoBuffer, 50, headerY - 10, { width: 70 });
             }
-            catch (e) {
-                doc.fontSize(18).text(clinica.nome_fantasia || '', headerXSemLogo, headerY + 10);
-                doc.fontSize(10).text(clinica.endereco || '', headerXSemLogo, headerY + 35);
-                doc.fontSize(10).text(clinica.telefone || '', headerXSemLogo, headerY + 50);
-            }
+            catch (e) { }
         }
-        else {
-            doc.fontSize(18).text(clinica.nome_fantasia || '', headerXSemLogo, headerY + 10);
-            doc.fontSize(10).text(clinica.endereco || '', headerXSemLogo, headerY + 35);
-            doc.fontSize(10).text(clinica.telefone || '', headerXSemLogo, headerY + 50);
-        }
-        doc.moveDown(4);
-        doc.fontSize(16).text(`Prontuário do Paciente`, { align: 'center' });
+        doc.fontSize(16).text(clinica.nome_fantasia || 'Clínica Médica', headerXTexto, headerY);
+        doc.fontSize(9).fillColor('gray')
+            .text(clinica.endereco || '', headerXTexto, headerY + 20)
+            .text(`Tel: ${clinica.telefone || '-'}`, headerXTexto, headerY + 32);
+        doc.moveDown(3);
+        doc.fillColor('black').fontSize(18).text(`Prontuário Médico`, { align: 'center', underline: true });
         doc.moveDown(1);
-        doc.fontSize(12).text(`Paciente: ${paciente.nome_completo}`, { continued: true });
-        doc.text(` (ID: ${paciente.id})`);
-        doc.text(`CPF: ${paciente.cpf}`);
-        doc.text(`Data Nasc.: ${new Date(paciente.data_nascimento).toLocaleDateString('pt-BR')}`);
-        doc.moveDown(2);
-        const papelUsuario = usuarioLogado.papel.nome;
+        doc.rect(50, doc.y, 495, 60).stroke();
+        const yBox = doc.y + 10;
+        doc.fontSize(12).text(`Paciente:`, 60, yBox);
+        doc.font('Helvetica-Bold').text(paciente.nome_completo, 120, yBox);
+        doc.font('Helvetica').text(`CPF:`, 60, yBox + 20);
+        doc.text(paciente.cpf || 'Não informado', 120, yBox + 20);
+        doc.text(`Nascimento:`, 250, yBox + 20);
+        doc.text(paciente.data_nascimento ? new Date(paciente.data_nascimento).toLocaleDateString('pt-BR') : '-', 330, yBox + 20);
+        doc.moveDown(4);
+        const papelUsuario = usuarioLogado.papel;
         const tiposVisiveis = [client_1.TipoEvolucao.GERAL];
-        if (papelUsuario === client_1.NomePapel.PSICOLOGO) {
+        if (papelUsuario === client_1.NomePapel.PSICOLOGO)
             tiposVisiveis.push(client_1.TipoEvolucao.PSICOLOGICA);
-        }
-        if (papelUsuario === client_1.NomePapel.TERAPEUTA) {
+        if (papelUsuario === client_1.NomePapel.TERAPEUTA)
             tiposVisiveis.push(client_1.TipoEvolucao.TERAPEUTICA);
-        }
-        if (papelUsuario === client_1.NomePapel.ADMINISTRADOR ||
-            papelUsuario === client_1.NomePapel.COORDENADOR ||
-            papelUsuario === client_1.NomePapel.MEDICO) {
+        const papeisComAcessoTotal = [
+            client_1.NomePapel.ADMINISTRADOR,
+            client_1.NomePapel.COORDENADOR,
+            client_1.NomePapel.MEDICO,
+            client_1.NomePapel.ENFERMEIRO
+        ];
+        if (papeisComAcessoTotal.includes(papelUsuario)) {
             tiposVisiveis.push(client_1.TipoEvolucao.PSICOLOGICA, client_1.TipoEvolucao.TERAPEUTICA);
         }
-        doc.fontSize(14).text('Histórico Médico', { underline: true });
+        doc.font('Helvetica-Bold').fontSize(14).text('1. Histórico e Anamnese');
         doc.moveDown(0.5);
-        const historicosVisiveis = dados.historicos_medicos.filter((h) => tiposVisiveis.includes(h.tipo));
-        for (const h of historicosVisiveis) {
-            doc.fontSize(10).fillColor('black').text(`HISTÓRICO ${h.tipo}`);
-            doc.fontSize(10).fillColor('gray').text(`(Por: ${h.usuario_preencheu.nome_completo})`);
-            if (h.alergias)
-                doc.fontSize(10).fillColor('black').text(`Alergias: ${h.alergias}`);
+        const historicos = dados.historicos_medicos.filter(h => tiposVisiveis.includes(h.tipo));
+        if (historicos.length === 0)
+            doc.fontSize(10).font('Helvetica').text('Nenhum registro disponível.');
+        for (const h of historicos) {
+            const dataReg = h['createdAt'] ? new Date(h['createdAt']) : new Date();
+            doc.font('Helvetica-Bold').fontSize(10).text(`Tipo: ${h.tipo} - ${dataReg.toLocaleDateString()}`);
+            doc.font('Helvetica').text(`Profissional: ${h.usuario_preencheu?.nome_completo || 'Sistema'}`);
             if (h.condicoes_previas)
-                doc.fontSize(10).fillColor('black').text(`Condições: ${h.condicoes_previas}`);
+                doc.text(`Condições: ${h.condicoes_previas}`);
+            if (h.alergias)
+                doc.text(`Alergias: ${h.alergias}`);
             doc.moveDown(0.5);
         }
         doc.moveDown(1);
-        doc.fontSize(14).text('Evoluções', { underline: true });
+        doc.font('Helvetica-Bold').fontSize(14).text('2. Evoluções Clínicas');
         doc.moveDown(0.5);
-        const evolucoesVisiveis = dados.evolucoes.filter((evolucao) => tiposVisiveis.includes(evolucao.tipo));
-        for (const evolucao of evolucoesVisiveis) {
-            const data = new Date(evolucao.data_evolucao).toLocaleString('pt-BR');
-            doc.fontSize(10).fillColor('black');
-            doc.text(`[${evolucao.tipo}] - ${data} - ${evolucao.usuario.nome_completo} (${evolucao.usuario.papel.nome})`);
-            doc.fontSize(10).fillColor('gray').text(evolucao.descricao);
-            doc.moveDown(0.5);
+        const evolucoes = dados.evolucoes.filter(e => tiposVisiveis.includes(e.tipo));
+        if (evolucoes.length === 0)
+            doc.fontSize(10).font('Helvetica').text('Nenhuma evolução registrada.');
+        for (const evo of evolucoes) {
+            const data = new Date(evo.data_evolucao).toLocaleString('pt-BR');
+            const nomeProf = evo.usuario?.nome_completo || 'Desconhecido';
+            doc.fillColor('#003366').fontSize(10).font('Helvetica-Bold')
+                .text(`[${evo.tipo}] ${data} - ${nomeProf}`);
+            doc.fillColor('black').font('Helvetica').text(evo.descricao);
+            doc.moveDown(0.8);
+            doc.moveTo(50, doc.y).lineTo(545, doc.y).lineWidth(0.5).strokeColor('#cccccc').stroke();
+            doc.moveDown(0.8);
         }
-        doc.moveDown(1);
-        doc.fontSize(14).text('Prescrições Ativas', { underline: true });
-        doc.moveDown(0.5);
-        const prescricoesAtivas = dados.prescricoes.filter((p) => p.ativa);
-        if (prescricoesAtivas.length === 0) {
-            doc.fontSize(10).fillColor('gray').text('Nenhuma prescrição ativa encontrada.');
-        }
-        else {
-            for (const prescricao of prescricoesAtivas) {
-                doc.fontSize(11).fillColor('black').text(prescricao.produto.nome, { continued: true });
-                if (prescricao.dosagem) {
-                    doc.fontSize(11).text(` (${prescricao.dosagem})`);
-                }
-                doc.fontSize(10).fillColor('gray').text(`Qtd: ${prescricao.quantidade_por_dose} | Posologia: ${prescricao.posologia}`);
-                const medico = prescricao.usuario;
-                const registro = medico.registro_conselho ? ` (${medico.registro_conselho})` : '';
-                doc.fontSize(9).fillColor('darkgray').text(`Prescrito por: ${medico.nome_completo}${registro}`);
-                doc.moveDown(0.5);
-            }
-        }
-        doc.moveDown(1);
-        doc.fontSize(14).text('Sinais Vitais Recentes', { underline: true });
-        doc.moveDown(0.5);
-        if (dados.sinais_vitais.length > 0) {
-            const sinal = dados.sinais_vitais[0];
-            doc.fontSize(10).fillColor('black').text(`Data: ${sinal.data_hora_afericao.toLocaleString('pt-BR')}`);
-            doc.text(`PA: ${sinal.pressao_arterial || '--'} | FC: ${sinal.frequencia_cardiaca || '--'} | Temp: ${sinal.temperatura || '--'}°C`);
-            doc.text(`SPO2: ${sinal.saturacao_oxigenio || '--'}% | Dor: ${sinal.dor || '--'} | Glicemia: ${sinal.glicemia || '--'}`);
-        }
-        else {
-            doc.fontSize(10).fillColor('gray').text('Nenhum sinal vital recente.');
-        }
-        doc.moveDown(1);
+        doc.strokeColor('black');
         doc.end();
         return new Promise((resolve) => {
-            doc.on('end', () => {
-                resolve(Buffer.concat(buffers));
-            });
+            doc.on('end', () => resolve(Buffer.concat(buffers)));
         });
     }
     async gerarRelatorioFinanceiro(usuarioLogado, dataInicio, dataFim) {
@@ -191,74 +157,78 @@ let ImpressoesService = class ImpressoesService {
         const clinica = await this.prisma.clinica.findUnique({ where: { id: clinicaId } });
         const where = { clinicaId: clinicaId };
         if (dataInicio && dataFim) {
-            where.data_vencimento = {
-                gte: new Date(dataInicio),
-                lte: new Date(dataFim),
+            const inicio = new Date(dataInicio);
+            const fim = new Date(dataFim);
+            fim.setHours(23, 59, 59, 999);
+            where.data_pagamento = {
+                gte: inicio,
+                lte: fim,
             };
         }
         const transacoes = await this.prisma.transacaoFinanceira.findMany({
             where: where,
-            include: { categoria: true, paciente: true },
-            orderBy: { data_vencimento: 'asc' },
+            include: { categoria: true },
+            orderBy: { data_pagamento: 'asc' },
         });
-        let totalReceitas = 0;
-        let totalDespesas = 0;
+        let receitas = 0;
+        let despesas = 0;
         transacoes.forEach(t => {
             if (t.tipo === client_1.TipoTransacao.RECEITA)
-                totalReceitas += Number(t.valor);
+                receitas += Number(t.valor);
             else
-                totalDespesas += Number(t.valor);
+                despesas += Number(t.valor);
         });
-        const saldo = totalReceitas - totalDespesas;
+        const saldo = receitas - despesas;
         const doc = new PDFKit({ size: 'A4', margin: 50 });
         const buffers = [];
         doc.on('data', buffers.push.bind(buffers));
-        const logoBuffer = await this.getLogoBuffer(clinica.logo_url);
+        const logoBuffer = await this.getLogoBuffer(clinica?.logo_url || null);
         if (logoBuffer) {
             try {
-                doc.image(logoBuffer, 50, 40, { width: 80 });
+                doc.image(logoBuffer, 50, 40, { width: 60 });
             }
             catch (e) { }
         }
-        doc.fontSize(18).text(clinica.nome_fantasia || '', 150, 50);
-        doc.fontSize(12).text('Relatório Financeiro', 150, 75);
+        doc.fontSize(16).text(clinica?.nome_fantasia || 'Relatório Financeiro', 120, 45);
+        doc.fontSize(10).text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 120, 65);
         if (dataInicio && dataFim) {
-            doc.fontSize(10).text(`Período: ${dataInicio.split('T')[0]} a ${dataFim.split('T')[0]}`, 150, 90);
+            doc.text(`Período: ${new Date(dataInicio).toLocaleDateString()} até ${new Date(dataFim).toLocaleDateString()}`, 120, 80);
         }
         else {
-            doc.fontSize(10).text(`Período: Geral (Todo o histórico)`, 150, 90);
+            doc.text(`Período: Completo`, 120, 80);
         }
         doc.moveDown(4);
-        doc.fontSize(12).text('Resumo do Período', { underline: true });
-        doc.moveDown(0.5);
-        doc.fillColor('green').text(`Total Receitas: R$ ${totalReceitas.toFixed(2)}`);
-        doc.fillColor('red').text(`Total Despesas: R$ ${totalDespesas.toFixed(2)}`);
-        doc.fillColor('black').text(`Saldo Líquido: R$ ${saldo.toFixed(2)}`);
+        doc.rect(50, doc.y, 495, 40).fillAndStroke('#f0f0f0', '#cccccc');
+        doc.fillColor('black').fontSize(12).text(`Receitas: R$ ${receitas.toFixed(2)}`, 70, doc.y - 28, { continued: true });
+        doc.text(`   |   Despesas: R$ ${despesas.toFixed(2)}`, { continued: true });
+        doc.fillColor(saldo >= 0 ? 'green' : 'red');
+        doc.text(`   |   Saldo: R$ ${saldo.toFixed(2)}`);
         doc.moveDown(2);
-        doc.fontSize(10).text('Data', 50, doc.y, { width: 70 });
+        doc.fillColor('black').fontSize(10);
+        doc.text('Data Pagto', 50, doc.y, { width: 70 });
         doc.text('Descrição', 130, doc.y, { width: 200 });
-        doc.text('Categ.', 340, doc.y, { width: 80 });
-        doc.text('Valor (R$)', 430, doc.y, { width: 80, align: 'right' });
-        doc.moveTo(50, doc.y + 15).lineTo(550, doc.y + 15).stroke();
-        doc.moveDown(1.5);
+        doc.text('Cat.', 340, doc.y, { width: 80 });
+        doc.text('Valor', 440, doc.y, { width: 80, align: 'right' });
+        doc.moveTo(50, doc.y + 12).lineTo(545, doc.y + 12).stroke();
+        doc.moveDown(1);
         for (const t of transacoes) {
-            if (doc.y > 750) {
+            if (doc.y > 750)
                 doc.addPage();
-            }
-            const dataFormatada = t.data_vencimento.toISOString().split('T')[0].split('-').reverse().join('/');
-            const cor = t.tipo === client_1.TipoTransacao.RECEITA ? 'green' : 'red';
-            const sinal = t.tipo === client_1.TipoTransacao.RECEITA ? '+' : '-';
-            doc.fillColor('black').text(dataFormatada, 50, doc.y, { width: 70 });
+            const dataShow = t.data_pagamento
+                ? t.data_pagamento.toISOString().split('T')[0].split('-').reverse().join('/')
+                : '(Aberto)';
+            doc.text(dataShow, 50, doc.y, { width: 70 });
             doc.text(t.descricao.substring(0, 35), 130, doc.y, { width: 200 });
             doc.text(t.categoria?.nome || '-', 340, doc.y, { width: 80 });
-            doc.fillColor(cor).text(`${sinal} ${Number(t.valor).toFixed(2)}`, 430, doc.y, { width: 80, align: 'right' });
-            doc.moveDown(0.8);
+            const cor = t.tipo === client_1.TipoTransacao.RECEITA ? 'green' : 'red';
+            const sinal = t.tipo === client_1.TipoTransacao.RECEITA ? '+' : '-';
+            doc.fillColor(cor).text(`${sinal} ${Number(t.valor).toFixed(2)}`, 440, doc.y, { width: 80, align: 'right' });
+            doc.fillColor('black');
+            doc.moveDown(0.6);
         }
         doc.end();
         return new Promise((resolve) => {
-            doc.on('end', () => {
-                resolve(Buffer.concat(buffers));
-            });
+            doc.on('end', () => resolve(Buffer.concat(buffers)));
         });
     }
 };

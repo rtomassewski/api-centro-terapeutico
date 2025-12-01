@@ -5,6 +5,7 @@ import { CreateTrialDto } from './dto/create-trial.dto';
 export declare class AuthController {
     private authService;
     constructor(authService: AuthService);
+    getProfile(req: any): any;
     login(loginDto: LoginDto): Promise<{
         access_token: string;
         usuario: {

@@ -73,7 +73,7 @@ __decorate([
 ], SinaisVitaisController.prototype, "findOne", null);
 __decorate([
     (0, common_1.Patch)(':id'),
-    (0, roles_decorator_1.Roles)(client_1.NomePapel.ENFERMEIRO, client_1.NomePapel.MEDICO, client_1.NomePapel.ADMINISTRADOR),
+    (0, roles_decorator_1.Roles)(client_1.NomePapel.ENFERMEIRO, client_1.NomePapel.MEDICO, client_1.NomePapel.ADMINISTRADOR, client_1.NomePapel.TECNICO),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __param(1, (0, common_1.Body)()),
     __param(2, (0, common_1.Request)()),
