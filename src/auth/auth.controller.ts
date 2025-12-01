@@ -1,14 +1,24 @@
 // src/auth/auth.controller.ts
-import { Controller, Post, Body, UseGuards, Request, Patch } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Request, Patch, Get } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { UpdatePerfilDto } from './dto/update-perfil.dto'; // 4. Importe
 import { JwtAuthGuard } from './jwt-auth.guard'; //
 import { CreateTrialDto } from './dto/create-trial.dto';
 
+
+
 @Controller('auth') // Rota: /auth
 export class AuthController {
   constructor(private authService: AuthService) {}
+
+  @UseGuards(JwtAuthGuard)
+  @Get('perfil') // Rota: GET /auth/perfil
+  getProfile(@Request() req) {
+    // O JwtStrategy já decodificou o token e colocou o user no req.user
+    // Retornamos ele para o Front saber quem é.
+    return req.user; 
+  }
 
   @Post('login') // Rota: POST /auth/login
   async login(@Body() loginDto: LoginDto) {
@@ -21,6 +31,7 @@ export class AuthController {
     // Se o usuário for válido, o serviço de login gera o token
     return this.authService.login(usuario);
   }
+  
   @Patch('meu-perfil')
   @UseGuards(JwtAuthGuard) // 6. Proteja! Apenas usuários logados
   async updatePerfil(

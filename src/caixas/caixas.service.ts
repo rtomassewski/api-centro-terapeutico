@@ -1,6 +1,6 @@
 // src/caixas/caixas.service.ts
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../prisma.service';
+import { PrismaService } from '../prisma.service'; // Ajuste o caminho se necessário
 import { AbrirCaixaDto } from './dto/abrir-caixa.dto';
 import { FecharCaixaDto } from './dto/fechar-caixa.dto';
 import { StatusCaixa } from '@prisma/client';
@@ -11,7 +11,8 @@ export class CaixasService {
 
   // 1. Verificar Status Hoje
   async verificarStatusHoje(usuarioId: number) {
-    // Busca se existe algum caixa ABERTO para este usuário
+    console.log(`[DEBUG] Verificando caixa para Usuário ID: ${usuarioId}`);
+    
     const caixaAberto = await this.prisma.caixa.findFirst({
       where: {
         usuarioId: usuarioId,
@@ -19,13 +20,12 @@ export class CaixasService {
       },
     });
 
-    // Se não tiver aberto, retorna null (Front entende como fechado)
+    console.log(`[DEBUG] Resultado da busca: ${caixaAberto ? 'ACHOU CAIXA ID ' + caixaAberto.id : 'NENHUM CAIXA ABERTO'}`);
     return caixaAberto; 
   }
 
   // 2. Abrir Caixa
   async abrir(usuarioId: number, clinicaId: number, dto: AbrirCaixaDto) {
-    // Verifica se já não tem um aberto (Segurança)
     const caixaAberto = await this.verificarStatusHoje(usuarioId);
     if (caixaAberto) {
       throw new BadRequestException('Você já possui um caixa aberto.');
@@ -45,9 +45,11 @@ export class CaixasService {
 
   // 3. Fechar Caixa
   async fechar(usuarioId: number, dto: FecharCaixaDto) {
-    // Busca o caixa aberto do usuário
     const caixaAberto = await this.verificarStatusHoje(usuarioId);
+    
     if (!caixaAberto) {
+      // Se caiu aqui, é porque o verificarStatusHoje retornou null
+      console.log(`[ERRO] Tentativa de fechar caixa falhou. UsuarioID: ${usuarioId}`);
       throw new BadRequestException('Não há caixa aberto para fechar.');
     }
 
