@@ -41,6 +41,7 @@ export declare class LeitosController {
             nome_responsavel: string;
             telefone_responsavel: string;
             data_admissao: Date;
+            saldo: import("@prisma/client/runtime/library").Decimal;
         } | null;
         quarto: {
             ala: {

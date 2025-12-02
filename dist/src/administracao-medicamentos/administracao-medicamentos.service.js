@@ -74,8 +74,8 @@ let AdministracaoMedicamentosService = class AdministracaoMedicamentosService {
         const produto = prescricao.produto;
         const quantidade_para_sair = dto.quantidade_administrada || 0;
         if (dto.status === client_1.StatusAdministracao.ADMINISTRADO) {
-            if (produto.quantidade_estoque < quantidade_para_sair) {
-                throw new common_1.ConflictException(`Estoque insuficiente para "${produto.nome}". Estoque atual: ${produto.quantidade_estoque}`);
+            if (produto.estoque < quantidade_para_sair) {
+                throw new common_1.ConflictException(`Estoque insuficiente para "${produto.nome}". Estoque atual: ${produto.estoque}`);
             }
         }
         try {
@@ -105,7 +105,7 @@ let AdministracaoMedicamentosService = class AdministracaoMedicamentosService {
                 const produtoNovo = await tx.produto.update({
                     where: { id: produto.id },
                     data: {
-                        quantidade_estoque: {
+                        estoque: {
                             decrement: quantidade_para_sair,
                         },
                     },
@@ -115,7 +115,7 @@ let AdministracaoMedicamentosService = class AdministracaoMedicamentosService {
             return {
                 administracao: adm,
                 saida_estoque: saida,
-                estoque_atual: produtoAtualizado?.quantidade_estoque,
+                estoque_atual: produtoAtualizado?.estoque,
             };
         }
         catch (error) {
@@ -126,15 +126,12 @@ let AdministracaoMedicamentosService = class AdministracaoMedicamentosService {
         const where = {
             clinicaId: usuarioLogado.clinicaId,
         };
-        if (query.status) {
+        if (query.status)
             where.status = query.status;
-        }
-        if (query.pacienteId) {
+        if (query.pacienteId)
             where.pacienteId = query.pacienteId;
-        }
-        if (query.usuarioAdministrouId) {
+        if (query.usuarioAdministrouId)
             where.usuarioAdministrouId = query.usuarioAdministrouId;
-        }
         if (query.data_inicio && query.data_fim) {
             where.data_hora_prevista = {
                 gte: new Date(query.data_inicio),

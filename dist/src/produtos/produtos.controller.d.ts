@@ -9,44 +9,54 @@ export declare class ProdutosController {
         descricao: string | null;
         id: number;
         clinicaId: number;
+        ativo: boolean;
         unidade_medida: import("@prisma/client").$Enums.UnidadeMedida;
-        quantidade_estoque: number;
+        estoque: number;
         estoque_minimo: number;
+        valor: import("@prisma/client/runtime/library").Decimal;
     }>;
     findAll(req: any): Promise<{
         nome: string;
         descricao: string | null;
         id: number;
         clinicaId: number;
+        ativo: boolean;
         unidade_medida: import("@prisma/client").$Enums.UnidadeMedida;
-        quantidade_estoque: number;
+        estoque: number;
         estoque_minimo: number;
+        valor: import("@prisma/client/runtime/library").Decimal;
     }[]>;
     findOne(id: number, req: any): Promise<{
         nome: string;
         descricao: string | null;
         id: number;
         clinicaId: number;
+        ativo: boolean;
         unidade_medida: import("@prisma/client").$Enums.UnidadeMedida;
-        quantidade_estoque: number;
+        estoque: number;
         estoque_minimo: number;
+        valor: import("@prisma/client/runtime/library").Decimal;
     }>;
     update(id: number, updateDto: UpdateProdutoDto, req: any): Promise<{
         nome: string;
         descricao: string | null;
         id: number;
         clinicaId: number;
+        ativo: boolean;
         unidade_medida: import("@prisma/client").$Enums.UnidadeMedida;
-        quantidade_estoque: number;
+        estoque: number;
         estoque_minimo: number;
+        valor: import("@prisma/client/runtime/library").Decimal;
     }>;
     remove(id: number, req: any): Promise<{
         nome: string;
         descricao: string | null;
         id: number;
         clinicaId: number;
+        ativo: boolean;
         unidade_medida: import("@prisma/client").$Enums.UnidadeMedida;
-        quantidade_estoque: number;
+        estoque: number;
         estoque_minimo: number;
+        valor: import("@prisma/client/runtime/library").Decimal;
     }>;
 }

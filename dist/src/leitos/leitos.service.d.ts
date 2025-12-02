@@ -2,7 +2,7 @@ import { CreateLeitoDto } from './dto/create-leito.dto';
 import { UpdateLeitoDto } from './dto/update-leito.dto';
 import { QueryLeitoDto } from './dto/query-leito.dto';
 import { PrismaService } from '../prisma.service';
-import { Usuario } from '@prisma/client';
+import { Prisma, Usuario } from '@prisma/client';
 export declare class LeitosService {
     private prisma;
     constructor(prisma: PrismaService);
@@ -44,6 +44,7 @@ export declare class LeitosService {
             nome_responsavel: string;
             telefone_responsavel: string;
             data_admissao: Date;
+            saldo: Prisma.Decimal;
         } | null;
         quarto: {
             ala: {

@@ -35,7 +35,9 @@ export class ProdutosService {
       data: {
         ...dto,
         clinicaId: usuarioLogado.clinicaId, // Segurança
-        quantidade_estoque: 0, // Estoque inicial é sempre 0
+        
+        // --- CORREÇÃO AQUI: Mudado de 'quantidade_estoque' para 'estoque' ---
+        estoque: 0, // Estoque inicial é sempre 0
       },
     });
   }
@@ -63,21 +65,18 @@ export class ProdutosService {
   }
 
   /**
-   * ATUALIZAR um produto (nome, descrição, etc.)
+   * ATUALIZAR um produto (nome, descrição, valor, etc.)
    */
   async update(id: number, dto: UpdateProdutoDto, usuarioLogado: Usuario) {
     // 1. Valida se o produto é da clínica
     await this.getProduto(id, usuarioLogado.clinicaId);
 
-    // 2. REGRA DE NEGÓCIO: Já está implementada no DTO.
-    // O UpdateProdutoDto não contém 'quantidade_estoque',
-    // então é impossível atualizá-lo por esta rota.
-    // As linhas de 'destructuring' com erro foram removidas.
-
+    // 2. REGRA DE NEGÓCIO: O DTO não deve ter controle de estoque direto
+    
     // 3. Atualiza
     return this.prisma.produto.update({
       where: { id: id },
-      data: dto, // Passa o DTO diretamente, pois ele já é seguro
+      data: dto, 
     });
   }
 
@@ -96,6 +95,8 @@ export class ProdutosService {
       where: { produtoId: id },
     });
 
+    // Se tiver itens na loja vendidos, também não deveria excluir (opcional adicionar verificação aqui)
+    
     if (entradas > 0 || saidas > 0) {
       throw new ConflictException(
         'Este produto possui um histórico de estoque (entradas/saídas) e não pode ser removido. Considere desativá-lo.',

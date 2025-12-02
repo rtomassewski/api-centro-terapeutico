@@ -44,14 +44,16 @@ export class EntradasEstoqueService {
         this.prisma.produto.update({
           where: { id: dto.produtoId },
           data: {
-            quantidade_estoque: {
+            // --- CORREÇÃO: Usando 'estoque' ---
+            estoque: {
               increment: dto.quantidade, // Adiciona a quantidade ao total
             },
           },
         }),
       ]);
 
-      return { entrada, estoque_atual: produtoAtualizado.quantidade_estoque };
+      // --- CORREÇÃO: Retornando 'estoque' ---
+      return { entrada, estoque_atual: produtoAtualizado.estoque };
     } catch (error) {
       throw new Error(`Falha na transação de estoque: ${error.message}`);
     }

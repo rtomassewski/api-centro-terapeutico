@@ -1,5 +1,6 @@
 import { CreatePacienteDto } from './dto/create-paciente.dto';
 import { PrismaService } from '../prisma.service';
+import { Prisma } from '@prisma/client';
 import { Usuario } from '@prisma/client';
 import { UpdatePacienteDto } from './dto/update-paciente.dto';
 import { CheckInPacienteDto } from './dto/check-in-paciente.dto';
@@ -18,6 +19,7 @@ export declare class PacientesService {
         nome_responsavel: string;
         telefone_responsavel: string;
         data_admissao: Date;
+        saldo: Prisma.Decimal;
     }>;
     findAll(query: QueryPacienteDto, usuarioLogado: Usuario): Promise<{
         id: number;
@@ -37,6 +39,7 @@ export declare class PacientesService {
         nome_responsavel: string;
         telefone_responsavel: string;
         data_admissao: Date;
+        saldo: Prisma.Decimal;
     }>;
     update(pacienteId: number, dto: UpdatePacienteDto, usuarioLogado: Usuario): Promise<{
         id: number;
@@ -49,6 +52,7 @@ export declare class PacientesService {
         nome_responsavel: string;
         telefone_responsavel: string;
         data_admissao: Date;
+        saldo: Prisma.Decimal;
     }>;
     checkIn(pacienteId: number, dto: CheckInPacienteDto, usuarioLogado: Usuario): Promise<{
         quarto: {

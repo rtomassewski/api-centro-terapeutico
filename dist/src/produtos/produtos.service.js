@@ -31,7 +31,7 @@ let ProdutosService = class ProdutosService {
             data: {
                 ...dto,
                 clinicaId: usuarioLogado.clinicaId,
-                quantidade_estoque: 0,
+                estoque: 0,
             },
         });
     }

@@ -25,8 +25,8 @@ let SaidasEstoqueService = class SaidasEstoqueService {
         if (!produto) {
             throw new common_1.NotFoundException('Produto não encontrado nesta clínica.');
         }
-        if (produto.quantidade_estoque < dto.quantidade) {
-            throw new common_1.ConflictException(`Estoque insuficiente. Estoque atual: ${produto.quantidade_estoque}`);
+        if (produto.estoque < dto.quantidade) {
+            throw new common_1.ConflictException(`Estoque insuficiente. Estoque atual: ${produto.estoque}`);
         }
         try {
             const [saida, produtoAtualizado] = await this.prisma.$transaction([
@@ -42,13 +42,13 @@ let SaidasEstoqueService = class SaidasEstoqueService {
                 this.prisma.produto.update({
                     where: { id: dto.produtoId },
                     data: {
-                        quantidade_estoque: {
+                        estoque: {
                             decrement: dto.quantidade,
                         },
                     },
                 }),
             ]);
-            return { saida, estoque_atual: produtoAtualizado.quantidade_estoque };
+            return { saida, estoque_atual: produtoAtualizado.estoque };
         }
         catch (error) {
             throw new Error(`Falha na transação de estoque: ${error.message}`);

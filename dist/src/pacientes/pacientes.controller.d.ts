@@ -27,6 +27,7 @@ export declare class PacientesController {
         nome_responsavel: string;
         telefone_responsavel: string;
         data_admissao: Date;
+        saldo: import("@prisma/client/runtime/library").Decimal;
     }>;
     findAll(req: any, query: QueryPacienteDto): Promise<{
         id: number;
@@ -46,6 +47,7 @@ export declare class PacientesController {
         nome_responsavel: string;
         telefone_responsavel: string;
         data_admissao: Date;
+        saldo: import("@prisma/client/runtime/library").Decimal;
     }>;
     update(pacienteId: number, updatePacienteDto: UpdatePacienteDto, req: any): Promise<{
         id: number;
@@ -58,6 +60,7 @@ export declare class PacientesController {
         nome_responsavel: string;
         telefone_responsavel: string;
         data_admissao: Date;
+        saldo: import("@prisma/client/runtime/library").Decimal;
     }>;
     checkIn(pacienteId: number, dto: CheckInPacienteDto, req: any): Promise<{
         quarto: {

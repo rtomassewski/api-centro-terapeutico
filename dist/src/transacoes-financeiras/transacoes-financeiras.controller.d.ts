@@ -10,8 +10,8 @@ export declare class TransacoesFinanceirasController {
         id: number;
         clinicaId: number;
         pacienteId: number | null;
-        tipo: import("@prisma/client").$Enums.TipoTransacao;
         valor: number;
+        tipo: import("@prisma/client").$Enums.TipoTransacao;
         data_vencimento: Date;
         categoriaId: number;
         data_pagamento: Date | null;
@@ -28,8 +28,8 @@ export declare class TransacoesFinanceirasController {
         id: number;
         clinicaId: number;
         pacienteId: number | null;
-        tipo: import("@prisma/client").$Enums.TipoTransacao;
         valor: number;
+        tipo: import("@prisma/client").$Enums.TipoTransacao;
         data_vencimento: Date;
         categoriaId: number;
         data_pagamento: Date | null;
@@ -39,8 +39,8 @@ export declare class TransacoesFinanceirasController {
         id: number;
         clinicaId: number;
         pacienteId: number | null;
-        tipo: import("@prisma/client").$Enums.TipoTransacao;
         valor: number;
+        tipo: import("@prisma/client").$Enums.TipoTransacao;
         data_vencimento: Date;
         categoriaId: number;
         data_pagamento: Date | null;
@@ -50,8 +50,8 @@ export declare class TransacoesFinanceirasController {
         id: number;
         clinicaId: number;
         pacienteId: number | null;
-        tipo: import("@prisma/client").$Enums.TipoTransacao;
         valor: number;
+        tipo: import("@prisma/client").$Enums.TipoTransacao;
         data_vencimento: Date;
         categoriaId: number;
         data_pagamento: Date | null;
@@ -61,8 +61,8 @@ export declare class TransacoesFinanceirasController {
         id: number;
         clinicaId: number;
         pacienteId: number | null;
-        tipo: import("@prisma/client").$Enums.TipoTransacao;
         valor: number;
+        tipo: import("@prisma/client").$Enums.TipoTransacao;
         data_vencimento: Date;
         categoriaId: number;
         data_pagamento: Date | null;

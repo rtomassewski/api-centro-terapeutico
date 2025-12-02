@@ -28,9 +28,10 @@ export class SaidasEstoqueService {
     }
 
     // 2. REGRA DE NEGÓCIO: Verifica se há estoque suficiente
-    if (produto.quantidade_estoque < dto.quantidade) {
+    // --- CORREÇÃO: Usando 'estoque' ---
+    if (produto.estoque < dto.quantidade) {
       throw new ConflictException(
-        `Estoque insuficiente. Estoque atual: ${produto.quantidade_estoque}`,
+        `Estoque insuficiente. Estoque atual: ${produto.estoque}`,
       );
     }
 
@@ -52,14 +53,16 @@ export class SaidasEstoqueService {
         this.prisma.produto.update({
           where: { id: dto.produtoId },
           data: {
-            quantidade_estoque: {
+            // --- CORREÇÃO: Usando 'estoque' ---
+            estoque: {
               decrement: dto.quantidade, // Subtrai a quantidade do total
             },
           },
         }),
       ]);
 
-      return { saida, estoque_atual: produtoAtualizado.quantidade_estoque };
+      // --- CORREÇÃO: Retornando 'estoque' ---
+      return { saida, estoque_atual: produtoAtualizado.estoque };
     } catch (error) {
       throw new Error(`Falha na transação de estoque: ${error.message}`);
     }
