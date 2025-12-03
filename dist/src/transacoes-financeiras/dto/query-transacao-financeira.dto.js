@@ -18,6 +18,7 @@ class QueryTransacaoFinanceiraDto {
     tipo;
     data_inicio;
     data_fim;
+    status;
 }
 exports.QueryTransacaoFinanceiraDto = QueryTransacaoFinanceiraDto;
 __decorate([
@@ -41,4 +42,9 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], QueryTransacaoFinanceiraDto.prototype, "data_fim", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], QueryTransacaoFinanceiraDto.prototype, "status", void 0);
 //# sourceMappingURL=query-transacao-financeira.dto.js.map

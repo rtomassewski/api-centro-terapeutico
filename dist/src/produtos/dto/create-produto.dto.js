@@ -17,6 +17,8 @@ class CreateProdutoDto {
     descricao;
     unidade_medida;
     estoque_minimo;
+    valor;
+    tipo;
 }
 exports.CreateProdutoDto = CreateProdutoDto;
 __decorate([
@@ -40,4 +42,15 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Number)
 ], CreateProdutoDto.prototype, "estoque_minimo", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.Min)(0),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", Number)
+], CreateProdutoDto.prototype, "valor", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateProdutoDto.prototype, "tipo", void 0);
 //# sourceMappingURL=create-produto.dto.js.map

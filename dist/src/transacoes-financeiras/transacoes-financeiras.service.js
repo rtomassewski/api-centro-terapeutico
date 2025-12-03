@@ -17,38 +17,30 @@ let TransacoesFinanceirasService = class TransacoesFinanceirasService {
     constructor(prisma) {
         this.prisma = prisma;
     }
-    async getTransacao(id, clinicaId) {
-        const transacao = await this.prisma.transacaoFinanceira.findFirst({
-            where: { id: id, clinicaId: clinicaId },
-        });
-        if (!transacao) {
-            throw new common_1.NotFoundException('Transação não encontrada ou não pertence a esta clínica.');
-        }
-        return transacao;
-    }
-    async create(dto, usuarioLogado) {
-        const clinicaId = usuarioLogado.clinicaId;
+    async create(createDto, usuario) {
+        const { parcelas, repetir, ...rest } = createDto;
         return this.prisma.transacaoFinanceira.create({
             data: {
-                descricao: dto.descricao,
-                valor: dto.valor,
-                tipo: dto.tipo,
-                data_vencimento: new Date(dto.data_vencimento),
-                categoriaId: dto.categoriaId,
-                pacienteId: dto.pacienteId,
-                clinicaId: usuarioLogado.clinicaId,
+                descricao: createDto.descricao,
+                valor: createDto.valor,
+                tipo: createDto.tipo,
+                categoriaId: createDto.categoria_id,
+                pacienteId: createDto.paciente_id,
+                clinicaId: usuario.clinicaId,
+                usuario_lancamento_id: usuario.id,
+                data_vencimento: createDto.data_vencimento,
             },
         });
     }
-    async findAll(query, usuarioLogado) {
+    async findAll(query, usuario) {
         const where = {
-            clinicaId: usuarioLogado.clinicaId,
+            clinicaId: usuario.clinicaId,
         };
-        if (query.pacienteId) {
-            where.pacienteId = query.pacienteId;
-        }
         if (query.tipo) {
             where.tipo = query.tipo;
+        }
+        if (query.pacienteId) {
+            where.pacienteId = query.pacienteId;
         }
         if (query.data_inicio && query.data_fim) {
             where.data_vencimento = {
@@ -56,39 +48,63 @@ let TransacoesFinanceirasService = class TransacoesFinanceirasService {
                 lte: new Date(query.data_fim),
             };
         }
+        if (query.status === 'PAGO') {
+            where.data_pagamento = { not: null };
+        }
+        else if (query.status === 'ABERTO') {
+            where.data_pagamento = null;
+        }
         return this.prisma.transacaoFinanceira.findMany({
-            where: where,
+            where,
+            orderBy: { data_vencimento: 'asc' },
             include: {
-                categoria: { select: { nome: true } },
-                paciente: { select: { nome_completo: true } },
-            },
-            orderBy: {
-                data_vencimento: 'desc',
+                categoria: true,
+                paciente: {
+                    select: { nome_completo: true },
+                },
             },
         });
     }
-    async findOne(id, usuarioLogado) {
-        return this.getTransacao(id, usuarioLogado.clinicaId);
+    async findOne(id, usuario) {
+        const transacao = await this.prisma.transacaoFinanceira.findFirst({
+            where: {
+                id: id,
+                clinicaId: usuario.clinicaId,
+            },
+            include: {
+                categoria: true,
+                paciente: true,
+            },
+        });
+        if (!transacao) {
+            throw new common_1.NotFoundException('Transação não encontrada.');
+        }
+        return transacao;
     }
-    async update(id, dto, usuarioLogado) {
-        await this.getTransacao(id, usuarioLogado.clinicaId);
-        const dataPagamento = dto.data_pagamento
-            ? new Date(dto.data_pagamento)
-            : dto.data_pagamento === null
-                ? null
-                : undefined;
+    async update(id, updateDto, usuario) {
+        await this.findOne(id, usuario);
+        const dadosAtualizacao = {};
+        if (updateDto.descricao)
+            dadosAtualizacao.descricao = updateDto.descricao;
+        if (updateDto.valor)
+            dadosAtualizacao.valor = updateDto.valor;
+        if (updateDto.tipo)
+            dadosAtualizacao.tipo = updateDto.tipo;
+        if (updateDto.data_vencimento) {
+            dadosAtualizacao.data_vencimento = updateDto.data_vencimento;
+        }
+        if (updateDto.categoria_id) {
+            dadosAtualizacao.categoriaId = updateDto.categoria_id;
+        }
         return this.prisma.transacaoFinanceira.update({
-            where: { id: id },
-            data: {
-                ...dto,
-                data_pagamento: dataPagamento,
-            },
+            where: { id },
+            data: dadosAtualizacao,
         });
     }
-    async remove(id, usuarioLogado) {
-        await this.getTransacao(id, usuarioLogado.clinicaId);
+    async remove(id, usuario) {
+        await this.findOne(id, usuario);
         return this.prisma.transacaoFinanceira.delete({
-            where: { id: id },
+            where: { id },
         });
     }
 };

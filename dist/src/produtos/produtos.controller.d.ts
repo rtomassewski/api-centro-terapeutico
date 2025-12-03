@@ -14,8 +14,9 @@ export declare class ProdutosController {
         estoque: number;
         estoque_minimo: number;
         valor: import("@prisma/client/runtime/library").Decimal;
+        tipo: string;
     }>;
-    findAll(req: any): Promise<{
+    findAll(req: any, tipo?: string): Promise<{
         nome: string;
         descricao: string | null;
         id: number;
@@ -25,6 +26,7 @@ export declare class ProdutosController {
         estoque: number;
         estoque_minimo: number;
         valor: import("@prisma/client/runtime/library").Decimal;
+        tipo: string;
     }[]>;
     findOne(id: number, req: any): Promise<{
         nome: string;
@@ -36,6 +38,7 @@ export declare class ProdutosController {
         estoque: number;
         estoque_minimo: number;
         valor: import("@prisma/client/runtime/library").Decimal;
+        tipo: string;
     }>;
     update(id: number, updateDto: UpdateProdutoDto, req: any): Promise<{
         nome: string;
@@ -47,6 +50,7 @@ export declare class ProdutosController {
         estoque: number;
         estoque_minimo: number;
         valor: import("@prisma/client/runtime/library").Decimal;
+        tipo: string;
     }>;
     remove(id: number, req: any): Promise<{
         nome: string;
@@ -58,5 +62,6 @@ export declare class ProdutosController {
         estoque: number;
         estoque_minimo: number;
         valor: import("@prisma/client/runtime/library").Decimal;
+        tipo: string;
     }>;
 }

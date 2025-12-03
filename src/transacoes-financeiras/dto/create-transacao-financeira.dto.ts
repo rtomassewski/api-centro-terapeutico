@@ -1,33 +1,38 @@
 // src/transacoes-financeiras/dto/create-transacao-financeira.dto.ts
-import {
-  IsEnum,
-  IsNotEmpty,
-  IsString,
-  IsNumber,
-  IsDateString,
-  IsInt,
-  IsOptional,
-} from 'class-validator';
+import { IsNotEmpty, IsNumber, IsString, IsEnum, IsOptional, IsDateString, IsBoolean, IsInt } from 'class-validator';
 import { TipoTransacao } from '@prisma/client';
 
 export class CreateTransacaoFinanceiraDto {
   @IsString()
   @IsNotEmpty()
-  descricao: string; // Ex: "Mensalidade Paciente José - Mês 10"
+  descricao: string;
 
   @IsNumber()
-  valor: number; // Ex: 1500.00
+  @IsNotEmpty()
+  valor: number;
 
   @IsEnum(TipoTransacao)
-  tipo: TipoTransacao; // 'RECEITA' ou 'DESPESA'
-
-  @IsDateString()
-  data_vencimento: string;
+  @IsNotEmpty()
+  tipo: TipoTransacao; // RECEITA ou DESPESA
 
   @IsInt()
-  categoriaId: number; // O ID da Categoria (ex: "Mensalidades Pacientes")
+  @IsNotEmpty()
+  categoria_id: number; // snake_case
 
   @IsInt()
   @IsOptional()
-  pacienteId?: number; // Opcional: Vincula a transação a um paciente
+  paciente_id?: number; // snake_case
+
+  @IsDateString()
+  @IsNotEmpty()
+  data_vencimento: string; // snake_case
+
+  // --- CAMPOS QUE FALTAVAM ---
+  @IsInt()
+  @IsOptional()
+  parcelas?: number;
+
+  @IsBoolean()
+  @IsOptional()
+  repetir?: boolean;
 }

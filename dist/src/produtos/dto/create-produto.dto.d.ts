@@ -4,4 +4,6 @@ export declare class CreateProdutoDto {
     descricao?: string;
     unidade_medida: UnidadeMedida;
     estoque_minimo?: number;
+    valor: number;
+    tipo?: string;
 }

@@ -4,4 +4,5 @@ export declare class QueryTransacaoFinanceiraDto {
     tipo?: TipoTransacao;
     data_inicio?: string;
     data_fim?: string;
+    status?: string;
 }

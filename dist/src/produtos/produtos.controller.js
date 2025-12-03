@@ -31,8 +31,8 @@ let ProdutosController = class ProdutosController {
     create(createDto, req) {
         return this.produtosService.create(createDto, req.user);
     }
-    findAll(req) {
-        return this.produtosService.findAll(req.user);
+    findAll(req, tipo) {
+        return this.produtosService.findAll(req.user, tipo);
     }
     findOne(id, req) {
         return this.produtosService.findOne(id, req.user);
@@ -60,8 +60,9 @@ __decorate([
     (0, roles_decorator_1.Roles)(client_1.NomePapel.ADMINISTRADOR, client_1.NomePapel.ENFERMEIRO, client_1.NomePapel.TECNICO, client_1.NomePapel.MEDICO),
     (0, planos_decorator_1.Planos)(client_1.TipoPlano.ENTERPRISE, client_1.TipoPlano.TESTE),
     __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Query)('tipo')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", void 0)
 ], ProdutosController.prototype, "findAll", null);
 __decorate([

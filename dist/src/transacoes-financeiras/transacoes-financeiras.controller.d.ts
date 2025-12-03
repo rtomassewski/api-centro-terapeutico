@@ -13,8 +13,8 @@ export declare class TransacoesFinanceirasController {
         valor: number;
         tipo: import("@prisma/client").$Enums.TipoTransacao;
         data_vencimento: Date;
-        categoriaId: number;
         data_pagamento: Date | null;
+        categoriaId: number;
     }>;
     findAll(query: QueryTransacaoFinanceiraDto, req: any): Promise<({
         paciente: {
@@ -22,6 +22,9 @@ export declare class TransacoesFinanceirasController {
         } | null;
         categoria: {
             nome: string;
+            id: number;
+            clinicaId: number;
+            tipo: import("@prisma/client").$Enums.TipoTransacao;
         };
     } & {
         descricao: string;
@@ -31,10 +34,30 @@ export declare class TransacoesFinanceirasController {
         valor: number;
         tipo: import("@prisma/client").$Enums.TipoTransacao;
         data_vencimento: Date;
-        categoriaId: number;
         data_pagamento: Date | null;
+        categoriaId: number;
     })[]>;
     findOne(id: number, req: any): Promise<{
+        paciente: {
+            id: number;
+            nome_completo: string;
+            clinicaId: number;
+            status: import("@prisma/client").$Enums.StatusPaciente;
+            nome_social: string | null;
+            data_nascimento: Date;
+            cpf: string;
+            nome_responsavel: string;
+            telefone_responsavel: string;
+            data_admissao: Date;
+            saldo: import("@prisma/client/runtime/library").Decimal;
+        } | null;
+        categoria: {
+            nome: string;
+            id: number;
+            clinicaId: number;
+            tipo: import("@prisma/client").$Enums.TipoTransacao;
+        };
+    } & {
         descricao: string;
         id: number;
         clinicaId: number;
@@ -42,8 +65,8 @@ export declare class TransacoesFinanceirasController {
         valor: number;
         tipo: import("@prisma/client").$Enums.TipoTransacao;
         data_vencimento: Date;
-        categoriaId: number;
         data_pagamento: Date | null;
+        categoriaId: number;
     }>;
     update(id: number, updateDto: UpdateTransacaoFinanceiraDto, req: any): Promise<{
         descricao: string;
@@ -53,8 +76,8 @@ export declare class TransacoesFinanceirasController {
         valor: number;
         tipo: import("@prisma/client").$Enums.TipoTransacao;
         data_vencimento: Date;
-        categoriaId: number;
         data_pagamento: Date | null;
+        categoriaId: number;
     }>;
     remove(id: number, req: any): Promise<{
         descricao: string;
@@ -64,7 +87,7 @@ export declare class TransacoesFinanceirasController {
         valor: number;
         tipo: import("@prisma/client").$Enums.TipoTransacao;
         data_vencimento: Date;
-        categoriaId: number;
         data_pagamento: Date | null;
+        categoriaId: number;
     }>;
 }

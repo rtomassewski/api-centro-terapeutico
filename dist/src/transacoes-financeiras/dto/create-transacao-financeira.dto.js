@@ -16,9 +16,11 @@ class CreateTransacaoFinanceiraDto {
     descricao;
     valor;
     tipo;
+    categoria_id;
+    paciente_id;
     data_vencimento;
-    categoriaId;
-    pacienteId;
+    parcelas;
+    repetir;
 }
 exports.CreateTransacaoFinanceiraDto = CreateTransacaoFinanceiraDto;
 __decorate([
@@ -28,23 +30,37 @@ __decorate([
 ], CreateTransacaoFinanceiraDto.prototype, "descricao", void 0);
 __decorate([
     (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", Number)
 ], CreateTransacaoFinanceiraDto.prototype, "valor", void 0);
 __decorate([
     (0, class_validator_1.IsEnum)(client_1.TipoTransacao),
+    (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], CreateTransacaoFinanceiraDto.prototype, "tipo", void 0);
 __decorate([
-    (0, class_validator_1.IsDateString)(),
-    __metadata("design:type", String)
-], CreateTransacaoFinanceiraDto.prototype, "data_vencimento", void 0);
-__decorate([
     (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", Number)
-], CreateTransacaoFinanceiraDto.prototype, "categoriaId", void 0);
+], CreateTransacaoFinanceiraDto.prototype, "categoria_id", void 0);
 __decorate([
     (0, class_validator_1.IsInt)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Number)
-], CreateTransacaoFinanceiraDto.prototype, "pacienteId", void 0);
+], CreateTransacaoFinanceiraDto.prototype, "paciente_id", void 0);
+__decorate([
+    (0, class_validator_1.IsDateString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], CreateTransacaoFinanceiraDto.prototype, "data_vencimento", void 0);
+__decorate([
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], CreateTransacaoFinanceiraDto.prototype, "parcelas", void 0);
+__decorate([
+    (0, class_validator_1.IsBoolean)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Boolean)
+], CreateTransacaoFinanceiraDto.prototype, "repetir", void 0);
 //# sourceMappingURL=create-transacao-financeira.dto.js.map

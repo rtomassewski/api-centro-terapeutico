@@ -16,8 +16,9 @@ export declare class ProdutosService {
         estoque: number;
         estoque_minimo: number;
         valor: import("@prisma/client/runtime/library").Decimal;
+        tipo: string;
     }>;
-    findAll(usuarioLogado: Usuario): Promise<{
+    findAll(usuarioLogado: Usuario, tipo?: string): Promise<{
         nome: string;
         descricao: string | null;
         id: number;
@@ -27,6 +28,7 @@ export declare class ProdutosService {
         estoque: number;
         estoque_minimo: number;
         valor: import("@prisma/client/runtime/library").Decimal;
+        tipo: string;
     }[]>;
     findOne(id: number, usuarioLogado: Usuario): Promise<{
         nome: string;
@@ -38,6 +40,7 @@ export declare class ProdutosService {
         estoque: number;
         estoque_minimo: number;
         valor: import("@prisma/client/runtime/library").Decimal;
+        tipo: string;
     }>;
     update(id: number, dto: UpdateProdutoDto, usuarioLogado: Usuario): Promise<{
         nome: string;
@@ -49,6 +52,7 @@ export declare class ProdutosService {
         estoque: number;
         estoque_minimo: number;
         valor: import("@prisma/client/runtime/library").Decimal;
+        tipo: string;
     }>;
     remove(id: number, usuarioLogado: Usuario): Promise<{
         nome: string;
@@ -60,5 +64,6 @@ export declare class ProdutosService {
         estoque: number;
         estoque_minimo: number;
         valor: import("@prisma/client/runtime/library").Decimal;
+        tipo: string;
     }>;
 }

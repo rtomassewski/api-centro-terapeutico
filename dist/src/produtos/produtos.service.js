@@ -32,14 +32,19 @@ let ProdutosService = class ProdutosService {
                 ...dto,
                 clinicaId: usuarioLogado.clinicaId,
                 estoque: 0,
+                tipo: dto.tipo || 'FARMACIA',
             },
         });
     }
-    async findAll(usuarioLogado) {
+    async findAll(usuarioLogado, tipo) {
+        const where = {
+            clinicaId: usuarioLogado.clinicaId,
+        };
+        if (tipo) {
+            where.tipo = tipo;
+        }
         return this.prisma.produto.findMany({
-            where: {
-                clinicaId: usuarioLogado.clinicaId,
-            },
+            where: where,
             orderBy: {
                 nome: 'asc',
             },
@@ -64,7 +69,7 @@ let ProdutosService = class ProdutosService {
             where: { produtoId: id },
         });
         if (entradas > 0 || saidas > 0) {
-            throw new common_1.ConflictException('Este produto possui um histórico de estoque (entradas/saídas) e não pode ser removido. Considere desativá-lo.');
+            throw new common_1.ConflictException('Este produto possui histórico e não pode ser removido. Considere desativá-lo.');
         }
         return this.prisma.produto.delete({
             where: { id: id },

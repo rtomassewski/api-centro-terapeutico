@@ -3,7 +3,9 @@ export declare class CreateTransacaoFinanceiraDto {
     descricao: string;
     valor: number;
     tipo: TipoTransacao;
+    categoria_id: number;
+    paciente_id?: number;
     data_vencimento: string;
-    categoriaId: number;
-    pacienteId?: number;
+    parcelas?: number;
+    repetir?: boolean;
 }
