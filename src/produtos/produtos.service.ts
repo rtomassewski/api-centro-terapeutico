@@ -35,21 +35,33 @@ export class ProdutosService {
       data: {
         ...dto,
         clinicaId: usuarioLogado.clinicaId, // Segurança
-        
-        // --- CORREÇÃO AQUI: Mudado de 'quantidade_estoque' para 'estoque' ---
         estoque: 0, // Estoque inicial é sempre 0
+        
+        // --- CORREÇÃO: GARANTE O TIPO ---
+        // Se o DTO vier com "LOJA", salva LOJA. Se vier vazio, salva FARMACIA.
+        tipo: dto.tipo || 'FARMACIA', 
       },
     });
   }
 
   /**
-   * LISTAR todos os produtos da clínica
+   * LISTAR produtos (Com Filtro opcional de Tipo)
    */
-  async findAll(usuarioLogado: Usuario) {
+  // --- CORREÇÃO: Adicionado o argumento 'tipo' opcional ---
+  async findAll(usuarioLogado: Usuario, tipo?: string) {
+    
+    // Cria o objeto de filtro base (apenas clínica)
+    const where: any = {
+      clinicaId: usuarioLogado.clinicaId,
+    };
+
+    // --- CORREÇÃO: Se o tipo foi informado, adiciona ao filtro ---
+    if (tipo) {
+      where.tipo = tipo;
+    }
+
     return this.prisma.produto.findMany({
-      where: {
-        clinicaId: usuarioLogado.clinicaId, // Segurança
-      },
+      where: where, // Usa o filtro dinâmico
       orderBy: {
         nome: 'asc',
       },
@@ -60,20 +72,15 @@ export class ProdutosService {
    * BUSCAR UM produto
    */
   async findOne(id: number, usuarioLogado: Usuario) {
-    // Helper já faz a validação de segurança
     return this.getProduto(id, usuarioLogado.clinicaId);
   }
 
   /**
-   * ATUALIZAR um produto (nome, descrição, valor, etc.)
+   * ATUALIZAR um produto
    */
   async update(id: number, dto: UpdateProdutoDto, usuarioLogado: Usuario) {
-    // 1. Valida se o produto é da clínica
     await this.getProduto(id, usuarioLogado.clinicaId);
 
-    // 2. REGRA DE NEGÓCIO: O DTO não deve ter controle de estoque direto
-    
-    // 3. Atualiza
     return this.prisma.produto.update({
       where: { id: id },
       data: dto, 
@@ -84,10 +91,8 @@ export class ProdutosService {
    * REMOVER um produto
    */
   async remove(id: number, usuarioLogado: Usuario) {
-    // 1. Valida se o produto é da clínica
     await this.getProduto(id, usuarioLogado.clinicaId);
 
-    // 2. REGRA DE NEGÓCIO: Não permite excluir se houver histórico
     const entradas = await this.prisma.entradaEstoque.count({
       where: { produtoId: id },
     });
@@ -95,15 +100,12 @@ export class ProdutosService {
       where: { produtoId: id },
     });
 
-    // Se tiver itens na loja vendidos, também não deveria excluir (opcional adicionar verificação aqui)
-    
     if (entradas > 0 || saidas > 0) {
       throw new ConflictException(
-        'Este produto possui um histórico de estoque (entradas/saídas) e não pode ser removido. Considere desativá-lo.',
+        'Este produto possui histórico e não pode ser removido. Considere desativá-lo.',
       );
     }
     
-    // 3. Remove
     return this.prisma.produto.delete({
       where: { id: id },
     });

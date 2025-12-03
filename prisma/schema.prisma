@@ -322,6 +322,7 @@ model Produto {
   // --- CORREÇÃO: Adicionado valor Decimal para loja ---
   valor          Decimal         @default(0.00)
   ativo          Boolean         @default(true)
+  tipo             String   @default("FARMACIA")
 
   clinicaId      Int
   clinica        Clinica         @relation(fields: [clinicaId], references: [id])

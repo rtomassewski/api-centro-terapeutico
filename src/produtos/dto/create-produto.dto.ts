@@ -6,7 +6,7 @@ import {
   IsOptional,
   IsString,
   Min,
-  IsNumber, // <--- ADICIONE ESSE IMPORT
+  IsNumber, 
 } from 'class-validator';
 import { UnidadeMedida } from '@prisma/client';
 
@@ -28,9 +28,14 @@ export class CreateProdutoDto {
   @IsOptional()
   estoque_minimo?: number; // Para alertas
 
-  // --- NOVO CAMPO PARA A LOJA ---
+  // --- CAMPO DE PREÇO (Correto) ---
   @IsNumber()
   @Min(0)
   @IsNotEmpty()
   valor: number; 
+
+  // --- CAMPO DE TIPO (Faltava este!) ---
+  @IsString()
+  @IsOptional()
+  tipo?: string; // Aceita "LOJA" ou "FARMACIA"
 }
