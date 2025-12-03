@@ -135,4 +135,34 @@ export class TransacoesFinanceirasService {
       where: { id: id },
     });
   }
+  async update(id: number, data: any, usuario: any) {
+    // Verifica se existe
+    const lancamento = await this.prisma.lancamentoFinanceiro.findFirst({
+        where: { id, clinicaId: usuario.clinicaId }
+    });
+    if (!lancamento) throw new NotFoundException("Lançamento não encontrado");
+
+    return this.prisma.lancamentoFinanceiro.update({
+      where: { id },
+      data: {
+        descricao: data.descricao,
+        valor: data.valor,
+        tipo: data.tipo,
+        formaPagamento: data.formaPagamento,
+        categoria: data.categoria
+      },
+    });
+  }
+
+  async remove(id: number, usuario: any) {
+     // Verifica se existe
+    const lancamento = await this.prisma.lancamentoFinanceiro.findFirst({
+        where: { id, clinicaId: usuario.clinicaId }
+    });
+    if (!lancamento) throw new NotFoundException("Lançamento não encontrado");
+
+    return this.prisma.lancamentoFinanceiro.delete({
+      where: { id },
+    });
+  }
 }
