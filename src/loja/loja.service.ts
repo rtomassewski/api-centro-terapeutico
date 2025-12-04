@@ -1,7 +1,7 @@
 // src/loja/loja.service.ts
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
-import { Usuario } from '@prisma/client';
+import { Usuario, TipoTransacao } from '@prisma/client';
 
 @Injectable()
 export class LojaService {
@@ -13,7 +13,6 @@ export class LojaService {
 
     if (valor <= 0) throw new BadRequestException('O valor deve ser positivo.');
 
-    // Usamos transaction para garantir que o saldo entre E o registro financeiro seja criado
     return this.prisma.$transaction(async (tx) => {
       // 1. Atualiza o saldo do paciente
       const paciente = await tx.paciente.update({
@@ -23,24 +22,42 @@ export class LojaService {
         },
       });
 
-      // 2. Cria o registro financeiro (O dinheiro entrou no caixa)
+      // 2. Busca ou Cria a Categoria
+      let categoria = await tx.categoriaFinanceira.findFirst({
+        where: { 
+            nome: 'Loja/Cantina',
+            clinicaId: usuario.clinicaId 
+        }
+      });
+
+      if (!categoria) {
+        categoria = await tx.categoriaFinanceira.create({
+            data: { 
+                nome: 'Loja/Cantina', 
+                tipo: TipoTransacao.RECEITA,
+                clinicaId: usuario.clinicaId 
+            }
+        });
+      }
+
+      // 3. Cria o registro financeiro
       await tx.transacaoFinanceira.create({
         data: {
-          descricao: `Crédito Loja - ${paciente.nomeCompleto}`,
+          descricao: `Crédito Loja - ${paciente.nome_completo}`, 
           valor: valor,
-          tipo: 'RECEITA',
-          categoria: {
-            connectOrCreate: {
-                where: { nome: 'Loja/Cantina' }, // Garante que a categoria exista
-                create: { nome: 'Loja/Cantina', tipo: 'RECEITA' }
-            }
-          },
+          tipo: TipoTransacao.RECEITA, 
+          
+          // Relações (camelCase)
+          categoriaId: categoria.id,
           pacienteId: paciente.id,
           clinicaId: usuario.clinicaId,
-          usuarioLancamentoId: usuario.id,
-          dataVencimento: new Date(),
-          dataPagamento: new Date(), // Já entra como pago
-          formaPagamento: 'DINHEIRO', // Ou ajuste conforme necessidade
+          
+          // Usuário nesta tabela é snake_case
+          
+          
+          // Dados snake_case
+          data_vencimento: new Date(),
+          data_pagamento: new Date(), 
         },
       });
 
@@ -52,55 +69,57 @@ export class LojaService {
   async realizarVenda(dados: { pacienteId: number; itens: { produtoId: number; qtd: number }[] }, usuario: Usuario) {
     const { pacienteId, itens } = dados;
 
-    // Transaction para garantir consistência (Estoque + Saldo)
     return this.prisma.$transaction(async (tx) => {
-      // 1. Busca o paciente e verifica saldo
       const paciente = await tx.paciente.findUnique({ where: { id: pacienteId } });
       if (!paciente) throw new NotFoundException('Paciente não encontrado');
 
-      // 2. Calcula total e verifica estoque
       let totalVenda = 0;
 
       for (const item of itens) {
         const produto = await tx.produto.findUnique({ where: { id: item.produtoId } });
         
         if (!produto) throw new NotFoundException(`Produto ID ${item.produtoId} não encontrado`);
-        if (produto.estoque < item.qtd) {
-            throw new BadRequestException(`Estoque insuficiente para ${produto.nome}. Disponível: ${produto.estoque}`);
+        
+        if (Number(produto.estoque) < item.qtd) {
+            throw new BadRequestException(`Estoque insuficiente para ${produto.nome}.`);
         }
 
         totalVenda += Number(produto.valor) * item.qtd;
 
-        // 3. Baixa no Estoque
+        // Baixa no Estoque
         await tx.produto.update({
             where: { id: item.produtoId },
             data: { estoque: { decrement: item.qtd } }
         });
 
-        // 4. Registra Saída de Estoque (Histórico)
+        // Registro de Saída de Estoque
         await tx.saidaEstoque.create({
             data: {
-                produtoId: item.produtoId,
+                produtoId: item.produtoId,   // camelCase
                 quantidade: item.qtd,
                 motivo: 'VENDA_LOJA',
-                usuarioId: usuario.id,
-                pacienteId: pacienteId
+                usuarioId: usuario.id,       // camelCase
+                
+                // --- CORREÇÃO FINAL AQUI ---
+                clinicaId: usuario.clinicaId // camelCase (Obrigatório)
             }
         });
       }
 
-      // 5. Verifica se o paciente tem saldo suficiente
-      if (paciente.saldo < totalVenda) {
+      if (Number(paciente.saldo) < totalVenda) {
         throw new BadRequestException(`Saldo insuficiente. Total: R$ ${totalVenda}, Saldo: R$ ${paciente.saldo}`);
       }
 
-      // 6. Deduz do saldo do paciente
+      // Deduz do saldo
       await tx.paciente.update({
         where: { id: pacienteId },
         data: { saldo: { decrement: totalVenda } },
       });
 
-      return { message: 'Venda realizada com sucesso', novoSaldo: paciente.saldo - totalVenda };
+      return { 
+          message: 'Venda realizada com sucesso', 
+          novoSaldo: Number(paciente.saldo) - totalVenda 
+      };
     });
   }
 }

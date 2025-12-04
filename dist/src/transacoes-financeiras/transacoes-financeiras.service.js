@@ -27,7 +27,6 @@ let TransacoesFinanceirasService = class TransacoesFinanceirasService {
                 categoriaId: createDto.categoria_id,
                 pacienteId: createDto.paciente_id,
                 clinicaId: usuario.clinicaId,
-                usuario_lancamento_id: usuario.id,
                 data_vencimento: createDto.data_vencimento,
             },
         });

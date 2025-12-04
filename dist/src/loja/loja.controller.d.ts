@@ -1,12 +1,11 @@
-import { PrismaService } from '../prisma.service';
-import { Usuario } from '@prisma/client';
-export declare class LojaService {
-    private readonly prisma;
-    constructor(prisma: PrismaService);
-    adicionarCredito(dados: {
+import { LojaService } from './loja.service';
+export declare class LojaController {
+    private readonly lojaService;
+    constructor(lojaService: LojaService);
+    adicionarCredito(body: {
         pacienteId: number;
         valor: number;
-    }, usuario: Usuario): Promise<{
+    }, req: any): Promise<{
         id: number;
         nome_completo: string;
         clinicaId: number;
@@ -19,13 +18,10 @@ export declare class LojaService {
         data_admissao: Date;
         saldo: import("@prisma/client/runtime/library").Decimal;
     }>;
-    realizarVenda(dados: {
+    realizarVenda(body: {
         pacienteId: number;
-        itens: {
-            produtoId: number;
-            qtd: number;
-        }[];
-    }, usuario: Usuario): Promise<{
+        itens: any[];
+    }, req: any): Promise<{
         message: string;
         novoSaldo: number;
     }>;

@@ -12,76 +12,93 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.LojaService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma.service");
+const client_1 = require("@prisma/client");
 let LojaService = class LojaService {
     prisma;
     constructor(prisma) {
         this.prisma = prisma;
     }
-    async adicionarCredito(pacienteId, valor, usuarioId, clinicaId) {
-        const paciente = await this.prisma.paciente.findUnique({ where: { id: pacienteId } });
-        if (!paciente)
-            throw new common_1.NotFoundException('Paciente não encontrado');
+    async adicionarCredito(dados, usuario) {
+        const { pacienteId, valor } = dados;
+        if (valor <= 0)
+            throw new common_1.BadRequestException('O valor deve ser positivo.');
         return this.prisma.$transaction(async (tx) => {
-            await tx.paciente.update({
+            const paciente = await tx.paciente.update({
                 where: { id: pacienteId },
-                data: { saldo: { increment: valor } }
+                data: {
+                    saldo: { increment: valor },
+                },
             });
+            let categoria = await tx.categoriaFinanceira.findFirst({
+                where: {
+                    nome: 'Loja/Cantina',
+                    clinicaId: usuario.clinicaId
+                }
+            });
+            if (!categoria) {
+                categoria = await tx.categoriaFinanceira.create({
+                    data: {
+                        nome: 'Loja/Cantina',
+                        tipo: client_1.TipoTransacao.RECEITA,
+                        clinicaId: usuario.clinicaId
+                    }
+                });
+            }
             await tx.transacaoFinanceira.create({
                 data: {
-                    descricao: `Crédito Loja - Paciente ${paciente.nome_completo}`,
-                    valor: Number(valor),
-                    tipo: 'RECEITA',
+                    descricao: `Crédito Loja - ${paciente.nome_completo}`,
+                    valor: valor,
+                    tipo: client_1.TipoTransacao.RECEITA,
+                    categoriaId: categoria.id,
+                    pacienteId: paciente.id,
+                    clinicaId: usuario.clinicaId,
                     data_vencimento: new Date(),
                     data_pagamento: new Date(),
-                    clinicaId,
-                    pacienteId: pacienteId,
-                    categoriaId: 1
-                }
+                },
             });
-            return { message: 'Crédito adicionado com sucesso' };
+            return paciente;
         });
     }
-    async realizarVenda(pacienteId, itens, usuarioId, clinicaId) {
+    async realizarVenda(dados, usuario) {
+        const { pacienteId, itens } = dados;
         return this.prisma.$transaction(async (tx) => {
-            let total = 0;
-            for (const item of itens) {
-                const prod = await tx.produto.findUnique({ where: { id: item.produtoId } });
-                if (!prod || prod.estoque < item.qtd) {
-                    throw new common_1.BadRequestException(`Estoque insuficiente ou produto inválido: ${prod?.nome}`);
-                }
-                total += Number(prod.valor) * item.qtd;
-            }
             const paciente = await tx.paciente.findUnique({ where: { id: pacienteId } });
             if (!paciente)
                 throw new common_1.NotFoundException('Paciente não encontrado');
-            if (Number(paciente.saldo) < total)
-                throw new common_1.BadRequestException('Saldo insuficiente.');
-            await tx.paciente.update({
-                where: { id: pacienteId },
-                data: { saldo: { decrement: total } }
-            });
-            const venda = await tx.venda.create({
-                data: {
-                    pacienteId,
-                    usuarioId,
-                    clinicaId,
-                    valor_total: total,
-                    itens: {
-                        create: itens.map(i => ({
-                            produtoId: i.produtoId,
-                            qtd: i.qtd,
-                            valor_unitario: 0
-                        }))
-                    }
-                }
-            });
+            let totalVenda = 0;
             for (const item of itens) {
+                const produto = await tx.produto.findUnique({ where: { id: item.produtoId } });
+                if (!produto)
+                    throw new common_1.NotFoundException(`Produto ID ${item.produtoId} não encontrado`);
+                if (Number(produto.estoque) < item.qtd) {
+                    throw new common_1.BadRequestException(`Estoque insuficiente para ${produto.nome}.`);
+                }
+                totalVenda += Number(produto.valor) * item.qtd;
                 await tx.produto.update({
                     where: { id: item.produtoId },
                     data: { estoque: { decrement: item.qtd } }
                 });
+                await tx.saidaEstoque.create({
+                    data: {
+                        produtoId: item.produtoId,
+                        quantidade: item.qtd,
+                        motivo: 'VENDA_LOJA',
+                        usuarioId: usuario.id,
+                        clinicaId: usuario.clinicaId
+                    }
+                });
             }
-            return venda;
+            if (Number(paciente.saldo) < totalVenda) {
+                throw new common_1.BadRequestException(`Saldo insuficiente. Total: R$ ${totalVenda}, Saldo: R$ ${paciente.saldo}`);
+            }
+            await tx.paciente.update({
+                where: { id: pacienteId },
+                data: { saldo: { decrement: totalVenda } },
+            });
+            return {
+                message: 'Venda realizada com sucesso',
+                novoSaldo: Number(paciente.saldo) - totalVenda
+            };
         });
     }
 };
