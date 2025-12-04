@@ -59,6 +59,7 @@ let PacientesService = class PacientesService {
                 nome_social: true,
                 data_nascimento: true,
                 status: true,
+                saldo: true,
             },
             orderBy: {
                 nome_completo: 'asc',

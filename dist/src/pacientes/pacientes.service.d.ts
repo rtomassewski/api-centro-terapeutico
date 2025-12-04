@@ -27,6 +27,7 @@ export declare class PacientesService {
         status: import("@prisma/client").$Enums.StatusPaciente;
         nome_social: string | null;
         data_nascimento: Date;
+        saldo: Prisma.Decimal;
     }[]>;
     findOne(pacienteId: number, usuarioLogado: Usuario): Promise<{
         id: number;

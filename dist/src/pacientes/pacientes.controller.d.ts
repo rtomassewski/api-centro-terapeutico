@@ -35,6 +35,7 @@ export declare class PacientesController {
         status: import("@prisma/client").$Enums.StatusPaciente;
         nome_social: string | null;
         data_nascimento: Date;
+        saldo: import("@prisma/client/runtime/library").Decimal;
     }[]>;
     findOne(pacienteId: number, req: any): Promise<{
         id: number;

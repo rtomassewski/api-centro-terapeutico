@@ -48,13 +48,11 @@ export class PacientesService {
   async findAll(query: QueryPacienteDto, usuarioLogado: Usuario) {
     const clinicaId = usuarioLogado.clinicaId;
 
-    // 1. Filtro base
     const where: Prisma.PacienteWhereInput = {
       clinicaId: clinicaId,
     };
 
-    if (query.semLeito === 'true') { // <-- Correção: Checa a string "true"
-      // Prisma: Encontre pacientes onde a relação 'leito' é nula
+    if (query.semLeito === 'true') { 
       where.leito = null;
     }
 
@@ -66,6 +64,10 @@ export class PacientesService {
         nome_social: true,
         data_nascimento: true,
         status: true,
+        
+        // --- ADICIONE ESTA LINHA ---
+        saldo: true, 
+        // ---------------------------
       },
       orderBy: {
         nome_completo: 'asc',
